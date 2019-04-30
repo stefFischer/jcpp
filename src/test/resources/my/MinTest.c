@@ -24,7 +24,7 @@ int main(){
 	
 	printf("MAX: %d - ", MAX(a1, a2));
 	
-	#if DO_SWAP
+	#ifdef DO_SWAP
  
 	int x = 10;
 	int y = 5;
