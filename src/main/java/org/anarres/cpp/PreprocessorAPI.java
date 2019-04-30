@@ -47,16 +47,19 @@ public class PreprocessorAPI {
 
         pp.setListener(new PreprocessorListener() {
             public void handleWarning(@Nonnull Source source, int line, int column, @Nonnull String msg) throws LexerException {
+                System.out.println(source.getName() + ":" + line + ":" + column  + ": warning: " + msg);
             }
             public void handleError(@Nonnull Source source, int line, int column, @Nonnull String msg) throws LexerException {
+                System.out.println(source.getName() + ":" + line + ":" + column  + ": error: " + msg);
             }
             public void handleSourceChange(@Nonnull Source source, @Nonnull SourceChangeEvent event) {
+//                System.out.println("source change: " + source + " ; event: " + event);
                 if(source instanceof  FileLexerSource){
                     currentFile = ((FileLexerSource) source).getFile();
                 }
             }
             public void handleInclude(@Nonnull String text, Source source, Source toInclude) {
-                System.out.println("Include " + text + " from: " + source + " source: " + toInclude);
+//                System.out.println("Include " + text + " from: " + source + " source: " + toInclude);
                 if(keepIncludes){
                     if(source instanceof  FileLexerSource) {
                         if (!includeHeaders && ((FileLexerSource) source).getFile().equals(currentFile)) {
@@ -66,6 +69,10 @@ public class PreprocessorAPI {
                 }
             }
         });
+    }
+
+    public void debug(){
+        pp.addFeature(Feature.DEBUG);
     }
 
     public void addSystemIncludePath(String path){

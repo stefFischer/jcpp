@@ -110,6 +110,9 @@ public class MyTests {
         File src = new File(cfile);
         File target = new File("processed");
 
+        //if you use this the preprocessor will be executed in debug mode
+//        pp.debug();
+
         //src file or directory
         //target directory
         pp.preprocess(src, target);
