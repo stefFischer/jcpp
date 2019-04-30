@@ -65,7 +65,6 @@ public class DefaultPreprocessorListener implements PreprocessorListener {
      * implementation. It may simply record the error message, or
      * it may throw an exception.
      */
-    @Override
     public void handleWarning(Source source, int line, int column,
             String msg)
             throws LexerException {
@@ -81,7 +80,6 @@ public class DefaultPreprocessorListener implements PreprocessorListener {
      * implementation. It may simply record the error message, or
      * it may throw an exception.
      */
-    @Override
     public void handleError(Source source, int line, int column,
             String msg)
             throws LexerException {
@@ -90,8 +88,10 @@ public class DefaultPreprocessorListener implements PreprocessorListener {
                 + ": error: " + msg);
     }
 
-    @Override
     public void handleSourceChange(Source source, SourceChangeEvent event) {
+    }
+
+    public void handleInclude(@Nonnull String text, Source source, Source toInclude) {
     }
 
 }

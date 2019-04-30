@@ -1239,6 +1239,10 @@ public class Preprocessor implements Closeable {
             String name;
             boolean quoted;
 
+            //add listener for include
+            String includeText = tok.getText();
+            Source currSource = source;
+
             if (tok.getType() == STRING) {
                 /* XXX Use the original text, not the value.
                  * Backslashes must not be treated as escapes here. */
@@ -1280,6 +1284,9 @@ public class Preprocessor implements Closeable {
 
             /* Do the inclusion. */
             include(source.getPath(), tok.getLine(), name, quoted, next);
+
+            //fire event
+            this.listener.handleInclude(includeText, currSource, source);
 
             /* 'tok' is the 'nl' after the include. We use it after the
              * #line directive. */
@@ -2165,7 +2172,6 @@ public class Preprocessor implements Closeable {
         return buf.toString();
     }
 
-    @Override
     public void close()
             throws IOException {
         {

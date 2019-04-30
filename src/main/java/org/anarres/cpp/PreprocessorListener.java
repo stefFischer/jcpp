@@ -56,4 +56,6 @@ public interface PreprocessorListener {
 
     public void handleSourceChange(@Nonnull Source source, @Nonnull SourceChangeEvent event);
 
+    public void handleInclude(@Nonnull String text, Source source, Source toInclude);
+
 }

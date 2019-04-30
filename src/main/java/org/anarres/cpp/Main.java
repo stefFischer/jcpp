@@ -103,6 +103,7 @@ public class Main {
         pp.addFeature(Feature.DIGRAPHS);
         pp.addFeature(Feature.TRIGRAPHS);
         pp.addFeature(Feature.LINEMARKERS);
+        pp.addFeature(Feature.INCLUDENEXT);
         pp.addWarning(Warning.IMPORT);
         pp.setListener(new DefaultPreprocessorListener());
         pp.addMacro("__JCPP__");
