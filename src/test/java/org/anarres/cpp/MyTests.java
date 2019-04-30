@@ -43,22 +43,18 @@ public class MyTests {
         pp.addInput(file);
 
         pp.setListener(new PreprocessorListener() {
-            public void handleWarning(@Nonnull Source source, int line, int column, @Nonnull String msg) throws LexerException {
+            public void handleWarning(@Nonnull Source source, int line, int column, @Nonnull String msg) {
                 System.out.println("WARNING: " + source.getName() + ":" + line + ":" + column + ": warning: " + msg);
             }
 
-            public void handleError(@Nonnull Source source, int line, int column, @Nonnull String msg) throws LexerException {
+            public void handleError(@Nonnull Source source, int line, int column, @Nonnull String msg) {
                 System.out.println("ERROR: " + source.getName() + ":" + line + ":" + column + ": warning: " + msg);
             }
 
             public void handleSourceChange(@Nonnull Source source, @Nonnull SourceChangeEvent event) {
 //                System.out.println("SourceChange: " + source + " : event: " + event);
                 if(source instanceof  FileLexerSource){
-                    if(((FileLexerSource) source).getFile().equals(file)){
-                        isCurrentSource = true;
-                    } else {
-                        isCurrentSource = false;
-                    }
+                    isCurrentSource = ((FileLexerSource) source).getFile().equals(file);
                 }
             }
 
