@@ -7,11 +7,12 @@ import java.io.File;
 
 public class MyTests {
 
-    private static final String cfile = "C:\\Users\\sfischer\\EclipseWorkspaceSplTools\\at.jku.isse.spltools\\at.jku.isse.spl.evaluate\\C-Examples\\MinTest.c";
+    private static final String cfile = "src\\test\\resources\\my\\MinTest.c";
+
+//    private static final String cfile = "src\\test\\resources\\my";
 
     @Test
     public void testMain() throws Exception {
-//        Main.main(new String[] {cfile, "-I", "C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include/ssp", "--debug"});
         Main.main(new String[]{cfile, "-I", "C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include", "-I", "C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include/ssp"});
     }
 
@@ -96,18 +97,25 @@ public class MyTests {
     public void testAPI() {
         PreprocessorAPI pp = new PreprocessorAPI();
 
+        //add locations for includes
         pp.addSystemIncludePath("C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include");
         pp.addSystemIncludePath("C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include/ssp");
 
+        //insert code from header files into output?
         pp.setIncludeHeaders(false);
 
+        //keep include directives, even though they will be processed either way
+        //NOTE: only set one of the two options at a time
         pp.setKeepIncludes(false);
 
+        //you can set macros that are not defined in the source code
         pp.addMacro("DO_SWAP");
 
         File src = new File(cfile);
         File target = new File("processed");
 
+        //src file or directory
+        //target directory
         pp.preprocess(src, target);
     }
 }
