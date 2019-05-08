@@ -766,7 +766,7 @@ public class LexerSource extends Source {
     }
 
     @Override
-    public Token token()
+    public Token nextToken()
             throws IOException,
             LexerException {
         Token tok = null;

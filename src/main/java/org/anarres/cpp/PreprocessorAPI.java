@@ -52,12 +52,14 @@ public class PreprocessorAPI {
             public void handleError(@Nonnull Source source, int line, int column, @Nonnull String msg) throws LexerException {
                 System.out.println(source.getName() + ":" + line + ":" + column  + ": error: " + msg);
             }
+
             public void handleSourceChange(@Nonnull Source source, @Nonnull SourceChangeEvent event) {
 //                System.out.println("source change: " + source + " ; event: " + event);
                 if(source instanceof  FileLexerSource){
                     currentFile = ((FileLexerSource) source).getFile();
                 }
             }
+
             public void handleInclude(@Nonnull String text, Source source, Source toInclude) {
 //                System.out.println("Include " + text + " from: " + source + " source: " + toInclude);
                 if(keepIncludes){
@@ -67,6 +69,36 @@ public class PreprocessorAPI {
                         }
                     }
                 }
+            }
+        });
+
+        pp.setControlListener(new PreprocessorControlListener() {
+            public boolean addMacro(Macro m, Source source) {
+                return true;
+            }
+
+            public boolean removeMacro(Macro m, Source source) {
+                return true;
+            }
+
+            public boolean expandMacro(Macro m, Source source, int line, int column) {
+                return true;
+            }
+
+            public boolean include(@Nonnull Source source, int line, @Nonnull String name, boolean quoted, boolean next){
+                return true;
+            }
+
+            public boolean processIf(List<Token> condition, Source source, IfType type) {
+                return true;
+            }
+
+            public String getPariallyProcessedCondition(List<Token> condition, Source source, IfType type, Preprocessor pp) {
+                //TODO check which parts of the condition should be processed, using pp.expr(String)
+//                if(type == IfType.IF){
+//                    return "3 < 10";
+//                }
+                return null;
             }
         });
     }

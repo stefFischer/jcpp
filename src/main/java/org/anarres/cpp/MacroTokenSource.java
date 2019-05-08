@@ -185,7 +185,7 @@ import static org.anarres.cpp.Token.*;
     }
 
     @Override
-    public Token token()
+    public Token nextToken()
             throws IOException,
             LexerException {
         for (;;) {

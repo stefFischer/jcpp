@@ -29,7 +29,7 @@ import static org.anarres.cpp.Token.EOF;
         this.target = target;
     }
 
-    public Token token()
+    public Token nextToken()
             throws IOException,
             LexerException {
         Token tok = getParent().token();

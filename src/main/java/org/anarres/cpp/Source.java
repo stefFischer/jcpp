@@ -19,6 +19,8 @@ package org.anarres.cpp;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
@@ -46,6 +48,8 @@ public abstract class Source implements Iterable<Token>, Closeable {
     private PreprocessorListener listener;
     private boolean active;
     private boolean werror;
+
+    private List<Token> peeked;
 
     /* LineNumberReader */
 
@@ -87,6 +91,7 @@ public abstract class Source implements Iterable<Token>, Closeable {
         this.listener = null;
         this.active = true;
         this.werror = false;
+        this.peeked = new LinkedList<Token>();
     }
 
     /**
@@ -213,19 +218,51 @@ public abstract class Source implements Iterable<Token>, Closeable {
     }
 
     /**
+     * Returns the next Token.
+     *
+     * @see Token
+     */
+    @Nonnull
+    public Token token() throws IOException, LexerException{
+        if(!this.peeked.isEmpty()){
+            return this.peeked.remove(0);
+        }
+        return nextToken();
+    }
+
+    /**
+     * Peeks for the next token
+     *
+     * @see Token
+     */
+    @Nonnull
+    public Token peek() throws IOException, LexerException{
+        Token tok = nextToken();
+        this.peeked.add(tok);
+        return tok;
+    }
+
+    /**
+     * remove the tokens that have been peeked and continue
+     * with token afterwards when calling token()
+     */
+    public void removePeeked(){
+        this.peeked.clear();
+    }
+
+    /**
      * Returns the next Token parsed from this input stream.
      *
      * @see Token
      */
     @Nonnull
-    public abstract Token token()
+    public abstract Token nextToken()
             throws IOException,
             LexerException;
 
     /**
      * Returns a token iterator for this Source.
      */
-    @Override
     public Iterator<Token> iterator() {
         return new SourceIterator(this);
     }

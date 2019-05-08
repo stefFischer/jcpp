@@ -17,6 +17,7 @@
 package org.anarres.cpp;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 
 /**
  * A handler for preprocessor events, primarily errors and warnings.
@@ -25,37 +26,22 @@ import javax.annotation.Nonnull;
  * error and warning events will throw an exception. Installing a
  * listener allows more intelligent handling of these events.
  */
-public interface PreprocessorListener {
+public interface PreprocessorControlListener {
 
-    /**
-     * Handles a warning.
-     *
-     * The behaviour of this method is defined by the
-     * implementation. It may simply record the error message, or
-     * it may throw an exception.
-     */
-    void handleWarning(@Nonnull Source source, int line, int column,
-            @Nonnull String msg)
-            throws LexerException;
 
-    /**
-     * Handles an error.
-     *
-     * The behaviour of this method is defined by the
-     * implementation. It may simply record the error message, or
-     * it may throw an exception.
-     */
-    void handleError(@Nonnull Source source, int line, int column,
-            @Nonnull String msg)
-            throws LexerException;
+    boolean expandMacro(Macro m, Source source, int line, int column);
 
-    enum SourceChangeEvent {
+    boolean addMacro(Macro m, Source source);
 
-        SUSPEND, PUSH, POP, RESUME;
+    boolean removeMacro(Macro m, Source source);
+
+    boolean include(@Nonnull Source source, int line, @Nonnull String name, boolean quoted, boolean next);
+
+    enum IfType{
+        IF, IFDEF, IFNDEF, ELSIF
     }
 
-    void handleSourceChange(@Nonnull Source source, @Nonnull SourceChangeEvent event);
+    boolean processIf(List<Token> condition, Source source, IfType type);
 
-    void handleInclude(@Nonnull String text, Source source, Source toInclude);
-
+    String getPariallyProcessedCondition(List<Token> condition, Source source, IfType type, Preprocessor pp);
 }

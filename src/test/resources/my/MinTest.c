@@ -32,7 +32,9 @@ int main(){
  
 	// What happens now?
 	if(x < 0)
+		#if defined(SWAP)
 	    SWAP(x, y);
+		#endif
 	else
 	    SWAP(x, z); 
 	

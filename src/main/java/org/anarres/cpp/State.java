@@ -22,16 +22,20 @@ package org.anarres.cpp;
     boolean active;
     boolean sawElse;
 
+    boolean processed;
+
     /* pp */ State() {
         this.parent = true;
         this.active = true;
         this.sawElse = false;
+        this.processed = true;
     }
 
     /* pp */ State(State parent) {
         this.parent = parent.isParentActive() && parent.isActive();
         this.active = true;
         this.sawElse = false;
+        this.processed = true;
     }
 
     /* Required for #elif */
@@ -57,6 +61,14 @@ package org.anarres.cpp;
 
     /* pp */ boolean sawElse() {
         return sawElse;
+    }
+
+    /* pp */ void setProcessed(boolean processed) {
+        this.processed = processed;
+    }
+
+    /* pp */ boolean isProcessed() {
+        return processed;
     }
 
     @Override

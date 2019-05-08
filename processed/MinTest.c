@@ -31,7 +31,9 @@ int main(){
  
 	// What happens now?
 	if(x < 0)
+		
 	    { x ^= y; y ^= x; x ^= y; };
+		
 	else
 	    { x ^= z; z ^= x; x ^= z; }; 
 	

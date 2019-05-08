@@ -16,27 +16,18 @@
  */
 package org.anarres.cpp;
 
+import org.anarres.cpp.PreprocessorListener.SourceChangeEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Stack;
-import java.util.TreeMap;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.*;
+
 import static org.anarres.cpp.PreprocessorCommand.*;
-import org.anarres.cpp.PreprocessorListener.SourceChangeEvent;
 import static org.anarres.cpp.Token.*;
 
 /**
@@ -80,7 +71,7 @@ public class Preprocessor implements Closeable {
 
     private static final Source INTERNAL = new Source() {
         @Override
-        public Token token()
+        public Token nextToken()
                 throws IOException,
                 LexerException {
             throw new LexerException("Cannot read from " + getName());
@@ -122,6 +113,7 @@ public class Preprocessor implements Closeable {
     private final Set<Warning> warnings;
     private VirtualFileSystem filesystem;
     private PreprocessorListener listener;
+    private PreprocessorControlListener controlListener;
 
     public Preprocessor() {
         this.inputs = new ArrayList<Source>();
@@ -143,6 +135,7 @@ public class Preprocessor implements Closeable {
         this.warnings = EnumSet.noneOf(Warning.class);
         this.filesystem = new JavaFileSystem();
         this.listener = null;
+        this.controlListener = null;
     }
 
     public Preprocessor(@Nonnull Source initial) {
@@ -188,6 +181,17 @@ public class Preprocessor implements Closeable {
             s.init(this);
             s = s.getParent();
         }
+    }
+
+    /**
+     * Sets the PreprocessorControlListener which handles events for
+     * this Preprocessor and allows to control the processing of directives.
+     *
+     * The listener is notified when include, define, macro expansion, ifs,
+     * and other things happen and asks if it should proceed with it.
+     */
+    public void setControlListener(@Nonnull PreprocessorControlListener controlListener){
+        this.controlListener = controlListener;
     }
 
     /**
@@ -1100,8 +1104,10 @@ public class Preprocessor implements Closeable {
 
         if (getFeature(Feature.DEBUG))
             LOG.debug("Defined macro " + m);
-        addMacro(m);
 
+        if(this.controlListener == null || this.controlListener.addMacro(m, this.source)) {
+            addMacro(m);
+        }
         return tok;	/* NL or EOF. */
 
     }
@@ -1120,7 +1126,9 @@ public class Preprocessor implements Closeable {
             Macro m = getMacro(tok.getText());
             if (m != null) {
                 /* XXX error if predefined */
-                macros.remove(m.getName());
+                if(this.controlListener == null || this.controlListener.removeMacro(m, this.source)){
+                    macros.remove(m.getName());
+                }
             }
         }
         return source_skipline(true);
@@ -1283,10 +1291,14 @@ public class Preprocessor implements Closeable {
             }
 
             /* Do the inclusion. */
-            include(source.getPath(), tok.getLine(), name, quoted, next);
+            if(this.controlListener == null || this.controlListener.include(source, tok.getLine(), name, quoted, next)) {
+                include(source.getPath(), tok.getLine(), name, quoted, next);
 
-            //fire event
-            this.listener.handleInclude(includeText, currSource, source);
+                if(this.listener != null) {
+                    //fire event
+                    this.listener.handleInclude(includeText, currSource, source);
+                }
+            }
 
             /* 'tok' is the 'nl' after the include. We use it after the
              * #line directive. */
@@ -1433,7 +1445,7 @@ public class Preprocessor implements Closeable {
                     return tok;
                 if (source.isExpanding(m))
                     return tok;
-                if (macro(m, tok))
+                if ((this.controlListener == null || this.controlListener.expandMacro(m, source, tok.getLine(), tok.getColumn())) && macro(m, tok))
                     continue;
             }
             return tok;
@@ -1574,6 +1586,13 @@ public class Preprocessor implements Closeable {
         if (text.length() == 0)
             return 0;
         return text.charAt(0);
+    }
+
+    public long expr(String expr)throws IOException, LexerException{
+        push_source(new StringLexerSource(expr), false);
+        long result = expr(0);
+        pop_source();
+        return result;
     }
 
     private long expr(int priority)
@@ -1822,6 +1841,10 @@ public class Preprocessor implements Closeable {
                 }
             } else {
                 tok = source_token();
+
+                if(source instanceof UnprocessedFixedTokenSource){
+                    return tok;
+                }
             }
 
             LEX:
@@ -1908,7 +1931,7 @@ public class Preprocessor implements Closeable {
                         return tok;
                     if (source.isExpanding(m))
                         return tok;
-                    if (macro(m, tok))
+                    if ((this.controlListener == null || this.controlListener.expandMacro(m, source, tok.getLine(), tok.getColumn())) && macro(m, tok))
                         break;
                     return tok;
 
@@ -1927,6 +1950,7 @@ public class Preprocessor implements Closeable {
                 // break;
 
                 case HASH:
+                    Token hash = tok;
                     tok = source_token_nonwhite();
                     // (new Exception("here")).printStackTrace();
                     switch (tok.getType()) {
@@ -1947,6 +1971,18 @@ public class Preprocessor implements Closeable {
                                 "Unknown preprocessor directive "
                                 + tok.getText());
                         return source_skipline(false);
+                    }
+
+                    //TODO handle multi line macros
+                    List<Token> ppTokens = new LinkedList<Token>();
+                    Token ppTok = tok;
+                    if(ppcmd == PP_IF || ppcmd == PP_IFDEF || ppcmd == PP_IFNDEF || ppcmd == PP_ELIF || ppcmd == PP_ELSE || ppcmd == PP_ENDIF) {
+                        while (ppTok.getType() != NL) {
+                            if (!ppTok.getText().equals("\r")) {
+                                ppTokens.add(ppTok);
+                            }
+                            ppTok = this.source.peek();
+                        }
                     }
 
                     PP:
@@ -1998,14 +2034,51 @@ public class Preprocessor implements Closeable {
                                 return source_skipline(false);
                             }
                             expr_token = null;
-                            states.peek().setActive(expr(0) != 0);
-                            tok = expr_token();	/* unget */
 
-                            if (tok.getType() == NL)
-                                return tok;
-                            return source_skipline(true);
-                        // break;
+                            {
+                                boolean process = this.controlListener == null || this.controlListener.processIf(ppTokens, this.source, PreprocessorControlListener.IfType.IF);
+                                states.peek().setProcessed(process);
 
+                                if (!process) {
+                                    states.peek().setActive(true);
+                                    getSource().removePeeked();
+
+                                    //partially process condition
+                                    List<Token> condition = ppTokens.subList(1, ppTokens.size());
+                                    String partiallyProcessed = this.controlListener.getPariallyProcessedCondition(condition, getSource(), PreprocessorControlListener.IfType.IF, this);
+
+                                    if(partiallyProcessed == null) {
+                                        ppTokens.add(ppTok);
+                                        push_source(new UnprocessedFixedTokenSource(ppTokens), true);
+                                    } else {
+                                        List<Token> partiallyProcessedTokens = new LinkedList<Token>();
+                                        partiallyProcessedTokens.add(ppTokens.get(0));
+                                        partiallyProcessedTokens.add(ppTokens.get(1));
+                                        StringLexerSource lex = new StringLexerSource(partiallyProcessed);
+                                        Token t = lex.token();
+                                        while(t.getType() != EOF){
+                                            partiallyProcessedTokens.add(t);
+                                            t = lex.token();
+                                        }
+                                        if(partiallyProcessedTokens.get(partiallyProcessedTokens.size() - 1).getType() != NL){
+                                            partiallyProcessedTokens.add(ppTok);
+                                        }
+                                        push_source(new UnprocessedFixedTokenSource(partiallyProcessedTokens), true);
+                                    }
+
+                                    return hash;
+
+                                } else {
+                                    states.peek().setActive(expr(0) != 0);
+                                }
+
+                                tok = expr_token();    /* unget */
+
+                                if (tok.getType() == NL)
+                                    return tok;
+                                return source_skipline(true);
+                                // break;
+                            }
                         case PP_ELIF:
                             State state = states.peek();
                             if (false) {
@@ -2017,7 +2090,7 @@ public class Preprocessor implements Closeable {
                             } else if (!state.isParentActive()) {
                                 /* Nested in skipped 'if' */
                                 return source_skipline(false);
-                            } else if (state.isActive()) {
+                            } else if (state.isProcessed() && state.isActive()) {
                                 /* The 'if' part got executed. */
                                 state.setParentActive(false);
                                 /* This is like # else # if but with
@@ -2025,6 +2098,34 @@ public class Preprocessor implements Closeable {
                                 state.setActive(false);
                                 return source_skipline(false);
                             } else {
+                                boolean process = state.isProcessed();
+                                if(!process){
+                                    //partially process condition
+                                    List<Token> condition = ppTokens.subList(1, ppTokens.size());
+                                    String partiallyProcessed = this.controlListener.getPariallyProcessedCondition(condition, getSource(), PreprocessorControlListener.IfType.ELSIF, this);
+
+                                    if(partiallyProcessed == null) {
+                                        ppTokens.add(ppTok);
+                                        push_source(new UnprocessedFixedTokenSource(ppTokens), true);
+                                    } else {
+                                        List<Token> partiallyProcessedTokens = new LinkedList<Token>();
+                                        partiallyProcessedTokens.add(ppTokens.get(0));
+                                        partiallyProcessedTokens.add(ppTokens.get(1));
+                                        StringLexerSource lex = new StringLexerSource(partiallyProcessed);
+                                        Token t = lex.token();
+                                        while(t.getType() != EOF){
+                                            partiallyProcessedTokens.add(t);
+                                            t = lex.token();
+                                        }
+                                        if(partiallyProcessedTokens.get(partiallyProcessedTokens.size() - 1).getType() != NL){
+                                            partiallyProcessedTokens.add(ppTok);
+                                        }
+                                        push_source(new UnprocessedFixedTokenSource(partiallyProcessedTokens), true);
+                                    }
+
+                                    return hash;
+                                }
+
                                 expr_token = null;
                                 state.setActive(expr(0) != 0);
                                 tok = expr_token();	/* unget */
@@ -2044,7 +2145,12 @@ public class Preprocessor implements Closeable {
                                 return source_skipline(false);
                             } else {
                                 state.setSawElse();
-                                state.setActive(!state.isActive());
+                                boolean process = state.isProcessed();
+                                state.setActive(!process || !state.isActive());
+                                if(!process){
+                                    push_source(new UnprocessedFixedTokenSource(ppTokens), true);
+                                    return hash;
+                                }
                                 return source_skipline(warnings.contains(Warning.ENDIF_LABELS));
                             }
                         // break;
@@ -2063,9 +2169,14 @@ public class Preprocessor implements Closeable {
                                     return source_skipline(false);
                                 } else {
                                     String text = tok.getText();
-                                    boolean exists
-                                            = macros.containsKey(text);
-                                    states.peek().setActive(exists);
+                                    boolean exists = macros.containsKey(text);
+                                    boolean process = this.controlListener == null || this.controlListener.processIf(ppTokens,this.source,PreprocessorControlListener.IfType.IFDEF);
+                                    states.peek().setActive(!process || exists);
+                                    states.peek().setProcessed(process);
+                                    if(!process){
+                                        push_source(new UnprocessedFixedTokenSource(ppTokens), true);
+                                        return hash;
+                                    }
                                     return source_skipline(true);
                                 }
                             }
@@ -2084,16 +2195,26 @@ public class Preprocessor implements Closeable {
                                     return source_skipline(false);
                                 } else {
                                     String text = tok.getText();
-                                    boolean exists
-                                            = macros.containsKey(text);
-                                    states.peek().setActive(!exists);
+                                    boolean exists = macros.containsKey(text);
+                                    boolean process = this.controlListener == null || this.controlListener.processIf(ppTokens,this.source,PreprocessorControlListener.IfType.IFNDEF);
+                                    states.peek().setActive(!process || !exists);
+                                    states.peek().setProcessed(process);
+                                    if(!process){
+                                        push_source(new UnprocessedFixedTokenSource(ppTokens), true);
+                                        return hash;
+                                    }
                                     return source_skipline(true);
                                 }
                             }
                         // break;
 
                         case PP_ENDIF:
+                            state = states.peek();
                             pop_state();
+                            if(!state.isProcessed()){
+                                push_source(new UnprocessedFixedTokenSource(ppTokens), true);
+                                return hash;
+                            }
                             return source_skipline(warnings.contains(Warning.ENDIF_LABELS));
                         // break;
 

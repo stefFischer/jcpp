@@ -39,7 +39,7 @@ import java.util.List;
     }
 
     @Override
-    public Token token()
+    public Token nextToken()
             throws IOException,
             LexerException {
         if (idx >= tokens.size())
