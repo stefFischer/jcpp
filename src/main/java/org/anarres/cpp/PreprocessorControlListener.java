@@ -43,5 +43,5 @@ public interface PreprocessorControlListener {
 
     boolean processIf(List<Token> condition, Source source, IfType type);
 
-    String getPariallyProcessedCondition(List<Token> condition, Source source, IfType type, Preprocessor pp);
+    String getPartiallyProcessedCondition(List<Token> condition, Source source, IfType type, Preprocessor pp);
 }

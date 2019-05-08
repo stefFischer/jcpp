@@ -93,7 +93,7 @@ public class PreprocessorAPI {
                 return true;
             }
 
-            public String getPariallyProcessedCondition(List<Token> condition, Source source, IfType type, Preprocessor pp) {
+            public String getPartiallyProcessedCondition(List<Token> condition, Source source, IfType type, Preprocessor pp) {
                 //TODO check which parts of the condition should be processed, using pp.expr(String)
 //                if(type == IfType.IF){
 //                    return "3 < 10";

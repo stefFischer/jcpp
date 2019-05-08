@@ -2045,7 +2045,7 @@ public class Preprocessor implements Closeable {
 
                                     //partially process condition
                                     List<Token> condition = ppTokens.subList(1, ppTokens.size());
-                                    String partiallyProcessed = this.controlListener.getPariallyProcessedCondition(condition, getSource(), PreprocessorControlListener.IfType.IF, this);
+                                    String partiallyProcessed = this.controlListener.getPartiallyProcessedCondition(condition, getSource(), PreprocessorControlListener.IfType.IF, this);
 
                                     if(partiallyProcessed == null) {
                                         ppTokens.add(ppTok);
@@ -2102,7 +2102,7 @@ public class Preprocessor implements Closeable {
                                 if(!process){
                                     //partially process condition
                                     List<Token> condition = ppTokens.subList(1, ppTokens.size());
-                                    String partiallyProcessed = this.controlListener.getPariallyProcessedCondition(condition, getSource(), PreprocessorControlListener.IfType.ELSIF, this);
+                                    String partiallyProcessed = this.controlListener.getPartiallyProcessedCondition(condition, getSource(), PreprocessorControlListener.IfType.ELSIF, this);
 
                                     if(partiallyProcessed == null) {
                                         ppTokens.add(ppTok);
