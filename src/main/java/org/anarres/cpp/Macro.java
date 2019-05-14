@@ -92,8 +92,12 @@ public class Macro {
     /**
      * Returns the number of arguments to this macro.
      */
-    public int getArgs() {
+    public int numberOfArgs() {
         return args.size();
+    }
+
+    public List<String> getArgs() {
+        return args;
     }
 
     /**

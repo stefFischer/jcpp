@@ -11,13 +11,17 @@ public class PreprocessorAPI {
 
     private Preprocessor pp;
 
-    private boolean includeHeaders = true;
+    private boolean inlineIncludes = true;
 
     private boolean keepIncludes = false;
+
+    private boolean keepDefines = false;
 
     private List<String> fileTypes = new LinkedList<String>();
 
     private File currentFile = null;
+
+    private File fileCurrentlyProcessed = null;
 
     private PrintStream out = null;
 
@@ -27,7 +31,7 @@ public class PreprocessorAPI {
         initDefault();
     }
 
-    private void initDefault(){
+    private void initDefault() {
         pp.addFeature(Feature.DIGRAPHS);
         pp.addFeature(Feature.TRIGRAPHS);
         pp.addFeature(Feature.LINEMARKERS);
@@ -47,25 +51,52 @@ public class PreprocessorAPI {
 
         pp.setListener(new PreprocessorListener() {
             public void handleWarning(@Nonnull Source source, int line, int column, @Nonnull String msg) throws LexerException {
-                System.out.println(source.getName() + ":" + line + ":" + column  + ": warning: " + msg);
+                System.out.println(source.getName() + ":" + line + ":" + column + ": warning: " + msg);
             }
+
             public void handleError(@Nonnull Source source, int line, int column, @Nonnull String msg) throws LexerException {
-                System.out.println(source.getName() + ":" + line + ":" + column  + ": error: " + msg);
+                System.out.println(source.getName() + ":" + line + ":" + column + ": error: " + msg);
             }
 
             public void handleSourceChange(@Nonnull Source source, @Nonnull SourceChangeEvent event) {
 //                System.out.println("source change: " + source + " ; event: " + event);
-                if(source instanceof  FileLexerSource){
+                if (source instanceof FileLexerSource) {
                     currentFile = ((FileLexerSource) source).getFile();
                 }
             }
 
             public void handleInclude(@Nonnull String text, Source source, Source toInclude) {
 //                System.out.println("Include " + text + " from: " + source + " source: " + toInclude);
-                if(keepIncludes){
-                    if(source instanceof  FileLexerSource) {
-                        if (!includeHeaders && ((FileLexerSource) source).getFile().equals(currentFile)) {
+                if (keepIncludes) {
+                    if (source instanceof FileLexerSource) {
+                        if (!inlineIncludes && ((FileLexerSource) source).getFile().equals(fileCurrentlyProcessed)) {
                             out.println("#include " + text);
+                        }
+                    }
+                }
+            }
+
+            public void handleDefine(Macro m, Source source) {
+                if (keepDefines) {
+                    if (source instanceof FileLexerSource) {
+                        if (((FileLexerSource) source).getFile().equals(fileCurrentlyProcessed)) {
+                            out.print("#define " + m.getName());
+                            if(m.isFunctionLike()){
+                                out.print("(");
+                                boolean first = true;
+                                for(String arg : m.getArgs()){
+                                    if(!first){
+                                        out.print(", ");
+                                    }
+                                    first = false;
+                                    out.print(arg);
+                                }
+                                out.print(")");
+                            }
+                            out.print(" ");
+                            for (Token tok : m.getTokens()) {
+                                out.print(tok.getText());
+                            }
                         }
                     }
                 }
@@ -81,59 +112,94 @@ public class PreprocessorAPI {
                 return true;
             }
 
-            public boolean expandMacro(Macro m, Source source, int line, int column) {
-                return true;
+            public boolean expandMacro(Macro m, Source source, int line, int column, boolean isInIf) {
+                return isInIf;
             }
 
-            public boolean include(@Nonnull Source source, int line, @Nonnull String name, boolean quoted, boolean next){
+            public boolean include(@Nonnull Source source, int line, @Nonnull String name, boolean quoted, boolean next) {
                 return true;
             }
 
             public boolean processIf(List<Token> condition, Source source, IfType type) {
+                if (source instanceof FileLexerSource) {
+                    if (((FileLexerSource) source).getFile().equals(fileCurrentlyProcessed)) {
+                        return false;
+                    }
+                }
                 return true;
             }
 
             public String getPartiallyProcessedCondition(List<Token> condition, Source source, IfType type, Preprocessor pp) {
                 //TODO check which parts of the condition should be processed, using pp.expr(String)
-//                if(type == IfType.IF){
-//                    return "3 < 10";
-//                }
+                if (source instanceof FileLexerSource) {
+                    if (((FileLexerSource) source).getFile().equals(fileCurrentlyProcessed)) {
+                        if (type == IfType.IF || type == IfType.ELSIF) {
+                            String cond = "";
+                            for (Token tok : condition) {
+                                cond += tok.getText();
+                            }
+                            try {
+                                return pp.expr(cond) + "";
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            } catch (LexerException e) {
+                                e.printStackTrace();
+                            }
+                        } else if(type == IfType.IFDEF){
+                            if(condition.size() == 1) {
+                                String name = condition.get(0).getText();
+                                if (pp.isDefined(name)) {
+                                    return "1";
+                                } else {
+                                    return "0";
+                                }
+                            }
+                        } else if(type == IfType.IFNDEF){
+                            if(condition.size() == 1) {
+                                String name = condition.get(0).getText();
+                                if (pp.isDefined(name)) {
+                                    return "0";
+                                } else {
+                                    return "1";
+                                }
+                            }
+                        }
+                    }
+                }
                 return null;
             }
         });
     }
 
-    public void debug(){
+    public void debug() {
         pp.addFeature(Feature.DEBUG);
     }
 
-    public void addSystemIncludePath(String path){
+    public void addSystemIncludePath(String path) {
         pp.getSystemIncludePath().add(path);
     }
 
     /**
-     *
      * @param ext - file extension without "."
      */
-    public void addFileExtensionToHandle(String ext){
+    public void addFileExtensionToHandle(String ext) {
         this.fileTypes.add(ext);
     }
 
     /**
-     *
      * @param ext - file extension without "."
      */
-    public void removeFileExtensionToHandle(String ext){
+    public void removeFileExtensionToHandle(String ext) {
         this.fileTypes.remove(ext);
     }
 
     /**
      * Set if you want to process the content of the header files into your output
      *
-     * @param includeHeaders - include the headers from #include in the output
+     * @param inlineIncludes - include the headers from #include in the output
      */
-    public void setIncludeHeaders(boolean includeHeaders) {
-        this.includeHeaders = includeHeaders;
+    public void setInlineIncludes(boolean inlineIncludes) {
+        this.inlineIncludes = inlineIncludes;
     }
 
     /**
@@ -145,7 +211,16 @@ public class PreprocessorAPI {
         this.keepIncludes = keepIncludes;
     }
 
-    public void addMacro(String name){
+    /**
+     * Set if you want to keep define and undef directives in output. Note: They still will be processed to expand macros if configured to.
+     *
+     * @param keepDefines - keep defines unprocessed in output
+     */
+    public void setKeepDefines(boolean keepDefines) {
+        this.keepDefines = keepDefines;
+    }
+
+    public void addMacro(String name) {
         try {
             pp.addMacro(name);
         } catch (LexerException e) {
@@ -153,7 +228,7 @@ public class PreprocessorAPI {
         }
     }
 
-    public void addMacro(String name, String value){
+    public void addMacro(String name, String value) {
         try {
             pp.addMacro(name, value);
         } catch (LexerException e) {
@@ -161,33 +236,36 @@ public class PreprocessorAPI {
         }
     }
 
-    public void removeMacro(String name){
+    public void removeMacro(String name) {
         pp.getMacros().remove(name);
     }
 
     /**
      * process files
      *
-     * @param src - source file or directory
+     * @param src       - source file or directory
      * @param targetDir - target directory for output
      */
-    public void preprocess(File src, File targetDir){
+    public void preprocess(File src, File targetDir) {
 
-        if(this.includeHeaders && this.keepIncludes){
+        if (this.inlineIncludes && this.keepIncludes) {
             throw new IllegalStateException("includeHeaders and keepIncludes should not be set at the same time");
         }
 
         List<File> files = new LinkedList<File>();
         getFilesToProcess(src, files);
 
-        for(File f : files){
+        for (File f : files) {
+
+            this.fileCurrentlyProcessed = f;
+
             try {
                 pp.addInput(f);
 
                 String sourcePath = f.getCanonicalPath();
                 String relativePath = sourcePath.substring(src.getCanonicalPath().length());
                 File target;
-                if(relativePath.length() == 0){
+                if (relativePath.length() == 0) {
                     target = new File(targetDir, f.getName());
                 } else {
                     target = new File(targetDir, relativePath);
@@ -198,14 +276,14 @@ public class PreprocessorAPI {
                 out = new PrintStream(target);
 
                 try {
-                    for (;;) {
+                    for (; ; ) {
                         Token tok = pp.token();
                         if (tok == null)
                             break;
                         if (tok.getType() == Token.EOF)
                             break;
-                        if(tok.getType() != Token.P_LINE) {
-                            if(this.includeHeaders || f.equals(this.currentFile)){
+                        if (tok.getType() != Token.P_LINE) {
+                            if (this.inlineIncludes || f.equals(this.currentFile)) {
                                 out.print(tok.getText());
                             }
                         }
@@ -231,14 +309,14 @@ public class PreprocessorAPI {
 
     }
 
-    private void getFilesToProcess(File f, List<File> files){
-        if(f.isDirectory()){
-            for(File file : f.listFiles()){
+    private void getFilesToProcess(File f, List<File> files) {
+        if (f.isDirectory()) {
+            for (File file : f.listFiles()) {
                 getFilesToProcess(file, files);
             }
-        } else if(f.isFile()){
-            for(String ext : this.fileTypes){
-                if(f.getName().endsWith("." + ext)){
+        } else if (f.isFile()) {
+            for (String ext : this.fileTypes) {
+                if (f.getName().endsWith("." + ext)) {
                     files.add(f);
                 }
             }

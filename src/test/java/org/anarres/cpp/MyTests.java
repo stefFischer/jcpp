@@ -24,11 +24,14 @@ public class MyTests {
         pp.addSystemIncludePath("C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include/ssp");
 
         //insert code from header files into output?
-        pp.setIncludeHeaders(false);
+        pp.setInlineIncludes(false);
 
         //keep include directives, even though they will be processed either way
         //NOTE: only set one of the two options at a time
-        pp.setKeepIncludes(false);
+        pp.setKeepIncludes(true);
+
+        //keep the define directives, in the output
+        pp.setKeepDefines(true);
 
         //you can set macros that are not defined in the source code
         pp.addMacro("DO_SWAP");

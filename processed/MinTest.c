@@ -1,29 +1,37 @@
+#include <stdio.h>
 
+#define MIN(a, b) ({__typeof__(a) _a = (a); __typeof__(b) _b = (b); _a < _b ? _a : _b;})
 
+#define MAX(a, b) ((a) < (b) ? (b) : (a))
 
+#define SWAP(a, b) { a ^= b; b ^= a; a ^= b; }
 
+#define ADD(a, b) (a + b)
 
-
-
-
+#define A 1
 
 //#if MIN(2, 3) > 1
-
+#if 1
 //#if ((2) < (3) ? (3) : (2)) < 10
 //#if 2 < 10
 int a;
 
+#elif 0
+int b;
+#else
+int c;
+#endif
 
 int main(){
 	
 	int a1 = 1;
 	int a2 = 4;
 	
-	printf("MIN: %d - ", ({__typeof__(a1) _a = (a1); __typeof__(a2) _b = (a2); _a < _b ? _a : _b;}));
+	printf("MIN: %d - ", MIN(a1, a2));
 	
-	printf("MAX: %d - ", ((a1) < (a2) ? (a2) : (a1)));
+	printf("MAX: %d - ", MAX(a1, a2));
 	
-	
+	#ifdef 1
  
 	int x = 10;
 	int y = 5;
@@ -31,12 +39,16 @@ int main(){
  
 	// What happens now?
 	if(x < 0)
-		
-	    { x ^= y; y ^= x; x ^= y; };
-		
+		#if 1
+	    SWAP(x, y);
+		#endif
 	else
-	    { x ^= z; z ^= x; x ^= z; }; 
+	    SWAP(x, z); 
 	
+	#endif
 	
+	#ifndef 0
+	//no swaping
+	#endif
 }
 

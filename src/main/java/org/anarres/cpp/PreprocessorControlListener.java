@@ -29,7 +29,7 @@ import java.util.List;
 public interface PreprocessorControlListener {
 
 
-    boolean expandMacro(Macro m, Source source, int line, int column);
+    boolean expandMacro(Macro m, Source source, int line, int column, boolean isInIf);
 
     boolean addMacro(Macro m, Source source);
 
