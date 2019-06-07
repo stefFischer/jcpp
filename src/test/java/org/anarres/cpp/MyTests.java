@@ -6,9 +6,9 @@ import java.io.File;
 
 public class MyTests {
 
-//    private static final String cfile = "src\\test\\resources\\my\\MinTest.c";
+    private static final String cfile = "src\\test\\resources\\my\\MinTest.c";
 
-    private static final String cfile = "src\\test\\resources\\my";
+//    private static final String cfile = "src\\test\\resources\\my";
 
     @Test
     public void testMain() throws Exception {
