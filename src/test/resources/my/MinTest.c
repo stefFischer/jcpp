@@ -4,19 +4,18 @@
 
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 
-#define SWAP(a, b)  { a ^= b; b ^= a; a ^= b; }
+#define SWAP(a, b) { a ^= b; b ^= a; a ^= b; }
 
 #define ADD(a, b) (a + b)
 
 #define A 1
 
-//#if MIN(2, 3) > 1
+
 #if MAX(2, 3) < 10
-//#if ((2) < (3) ? (3) : (2)) < 10
-//#if 2 < 10
+
 int a;
 
-#elif MAX(2, 3) < 3
+#elif MAX(2, MAX(4, 3)) < 3
 int b;
 #else
 int c;

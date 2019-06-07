@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-/* pp */ class FixedTokenSource extends Source {
+/* pp */public class FixedTokenSource extends Source {
 
     private static final Token EOF
             = new Token(Token.EOF, "<ts-eof>");
@@ -28,12 +28,12 @@ import java.util.List;
     private final List<Token> tokens;
     private int idx;
 
-    /* pp */ FixedTokenSource(Token... tokens) {
+    /* pp */public FixedTokenSource(Token... tokens) {
         this.tokens = Arrays.asList(tokens);
         this.idx = 0;
     }
 
-    /* pp */ FixedTokenSource(List<Token> tokens) {
+    /* pp */public FixedTokenSource(List<Token> tokens) {
         this.tokens = tokens;
         this.idx = 0;
     }

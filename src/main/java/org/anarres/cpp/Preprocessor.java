@@ -113,7 +113,7 @@ public class Preprocessor implements Closeable {
     private final Set<Warning> warnings;
     private VirtualFileSystem filesystem;
     private PreprocessorListener listener;
-    private PreprocessorControlListener controlListener;
+    private IPreprocessorControlListener controlListener;
 
     public Preprocessor() {
         this.inputs = new ArrayList<Source>();
@@ -185,13 +185,13 @@ public class Preprocessor implements Closeable {
     }
 
     /**
-     * Sets the PreprocessorControlListener which handles events for
+     * Sets the IPreprocessorControlListener which handles events for
      * this Preprocessor and allows to control the processing of directives.
      * <p>
      * The listener is notified when include, define, macro expansion, ifs,
      * and other things happen and asks if it should proceed with it.
      */
-    public void setControlListener(@Nonnull PreprocessorControlListener controlListener) {
+    public void setControlListener(@Nonnull IPreprocessorControlListener controlListener) {
         this.controlListener = controlListener;
     }
 
@@ -896,6 +896,17 @@ public class Preprocessor implements Closeable {
         }
 
         return true;
+    }
+
+    public List<Token> expand(@Nonnull String macroCall) throws IOException, LexerException {
+        StringLexerSource source = new StringLexerSource(macroCall);
+        List<Token> toks = new LinkedList<Token>();
+        Token tok = source.token();
+        while (tok != null && tok.getType() != Token.EOF) {
+            toks.add(tok);
+            tok = source.token();
+        }
+        return expand(toks);
     }
 
     /**
@@ -1980,7 +1991,7 @@ public class Preprocessor implements Closeable {
                         return source_skipline(false);
                     }
 
-                    //TODO handle multi line macros
+
                     List<Token> ppTokens = new LinkedList<Token>();
                     Token ppTok = tok;
                     if (ppcmd == PP_IF || ppcmd == PP_IFDEF || ppcmd == PP_IFNDEF || ppcmd == PP_ELIF || ppcmd == PP_ELSE || ppcmd == PP_ENDIF) {
@@ -2043,7 +2054,7 @@ public class Preprocessor implements Closeable {
                             expr_token = null;
 
                         {
-                            boolean process = this.controlListener == null || this.controlListener.processIf(ppTokens, this.source, PreprocessorControlListener.IfType.IF);
+                            boolean process = this.controlListener == null || this.controlListener.processIf(ppTokens, this.source, IPreprocessorControlListener.IfType.IF);
                             states.peek().setProcessed(process);
 
                             if (!process) {
@@ -2052,7 +2063,7 @@ public class Preprocessor implements Closeable {
 
                                 //partially process condition
                                 List<Token> condition = ppTokens.subList(1, ppTokens.size());
-                                String partiallyProcessed = this.controlListener.getPartiallyProcessedCondition(condition, getSource(), PreprocessorControlListener.IfType.IF, this);
+                                String partiallyProcessed = this.controlListener.getPartiallyProcessedCondition(condition, getSource(), IPreprocessorControlListener.IfType.IF, this);
 
                                 if (partiallyProcessed == null) {
                                     ppTokens.add(ppTok);
@@ -2111,7 +2122,7 @@ public class Preprocessor implements Closeable {
                                 if (!process) {
                                     //partially process condition
                                     List<Token> condition = ppTokens.subList(1, ppTokens.size());
-                                    String partiallyProcessed = this.controlListener.getPartiallyProcessedCondition(condition, getSource(), PreprocessorControlListener.IfType.ELSIF, this);
+                                    String partiallyProcessed = this.controlListener.getPartiallyProcessedCondition(condition, getSource(), IPreprocessorControlListener.IfType.ELSIF, this);
 
                                     if (partiallyProcessed == null) {
                                         ppTokens.add(ppTok);
@@ -2178,14 +2189,14 @@ public class Preprocessor implements Closeable {
                                 } else {
                                     String text = tok.getText();
                                     boolean exists = macros.containsKey(text);
-                                    boolean process = this.controlListener == null || this.controlListener.processIf(ppTokens, this.source, PreprocessorControlListener.IfType.IFDEF);
+                                    boolean process = this.controlListener == null || this.controlListener.processIf(ppTokens, this.source, IPreprocessorControlListener.IfType.IFDEF);
                                     states.peek().setActive(!process || exists);
                                     states.peek().setProcessed(process);
                                     if (!process) {
 
                                         List<Token> condition = new LinkedList<Token>();
                                         condition.add(tok);
-                                        String partiallyProcessed = this.controlListener.getPartiallyProcessedCondition(condition, getSource(), PreprocessorControlListener.IfType.IFDEF, this);
+                                        String partiallyProcessed = this.controlListener.getPartiallyProcessedCondition(condition, getSource(), IPreprocessorControlListener.IfType.IFDEF, this);
 
                                         if(partiallyProcessed == null) {
                                             push_source(new UnprocessedFixedTokenSource(ppTokens), true);
@@ -2223,14 +2234,14 @@ public class Preprocessor implements Closeable {
                                 } else {
                                     String text = tok.getText();
                                     boolean exists = macros.containsKey(text);
-                                    boolean process = this.controlListener == null || this.controlListener.processIf(ppTokens, this.source, PreprocessorControlListener.IfType.IFNDEF);
+                                    boolean process = this.controlListener == null || this.controlListener.processIf(ppTokens, this.source, IPreprocessorControlListener.IfType.IFNDEF);
                                     states.peek().setActive(!process || !exists);
                                     states.peek().setProcessed(process);
                                     if (!process) {
 
                                         List<Token> condition = new LinkedList<Token>();
                                         condition.add(tok);
-                                        String partiallyProcessed = this.controlListener.getPartiallyProcessedCondition(condition, getSource(), PreprocessorControlListener.IfType.IFNDEF, this);
+                                        String partiallyProcessed = this.controlListener.getPartiallyProcessedCondition(condition, getSource(), IPreprocessorControlListener.IfType.IFNDEF, this);
 
                                         if(partiallyProcessed == null) {
                                             push_source(new UnprocessedFixedTokenSource(ppTokens), true);

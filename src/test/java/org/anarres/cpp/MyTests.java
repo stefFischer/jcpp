@@ -6,9 +6,9 @@ import java.io.File;
 
 public class MyTests {
 
-    private static final String cfile = "src\\test\\resources\\my\\MinTest.c";
+//    private static final String cfile = "src\\test\\resources\\my\\MinTest.c";
 
-//    private static final String cfile = "src\\test\\resources\\my";
+    private static final String cfile = "src\\test\\resources\\my";
 
     @Test
     public void testMain() throws Exception {
@@ -17,7 +17,7 @@ public class MyTests {
 
     @Test
     public void testAPI() {
-        PreprocessorAPI pp = new PreprocessorAPI();
+        PreprocessorAPI pp = new PreprocessorAPI(new OnlyExandMacrosInIfsController());
 
         //add locations for includes
         pp.addSystemIncludePath("C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include");

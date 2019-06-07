@@ -1,5 +1,10 @@
 package org.anarres.cpp;
 
+import org.anarres.cpp.featureExpr.FeatureExpression;
+import org.anarres.cpp.featureExpr.FeatureExpressionParser;
+import org.anarres.cpp.featureExpr.MacroCall;
+import org.anarres.cpp.featureExpr.PostOrderTraversal;
+
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
@@ -10,6 +15,8 @@ import java.util.List;
 public class PreprocessorAPI {
 
     private Preprocessor pp;
+
+    private PreprocessorControlListener controlListener;
 
     private boolean inlineIncludes = true;
 
@@ -26,8 +33,15 @@ public class PreprocessorAPI {
     private PrintStream out = null;
 
     public PreprocessorAPI() {
-        this.pp = new Preprocessor();
+        this(null);
+    }
 
+    public PreprocessorAPI(PreprocessorControlListener controlListener) {
+        this.pp = new Preprocessor();
+        this.controlListener = controlListener;
+        if(controlListener != null){
+            this.pp.setControlListener(this.controlListener);
+        }
         initDefault();
     }
 
@@ -103,72 +117,68 @@ public class PreprocessorAPI {
             }
         });
 
-        pp.setControlListener(new PreprocessorControlListener() {
-            public boolean addMacro(Macro m, Source source) {
-                return true;
-            }
-
-            public boolean removeMacro(Macro m, Source source) {
-                return true;
-            }
-
-            public boolean expandMacro(Macro m, Source source, int line, int column, boolean isInIf) {
-                return isInIf;
-            }
-
-            public boolean include(@Nonnull Source source, int line, @Nonnull String name, boolean quoted, boolean next) {
-                return true;
-            }
-
-            public boolean processIf(List<Token> condition, Source source, IfType type) {
-                if (source instanceof FileLexerSource) {
-                    if (((FileLexerSource) source).getFile().equals(fileCurrentlyProcessed)) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-
-            public String getPartiallyProcessedCondition(List<Token> condition, Source source, IfType type, Preprocessor pp) {
-                //TODO check which parts of the condition should be processed, using pp.expr(String)
-                if (source instanceof FileLexerSource) {
-                    if (((FileLexerSource) source).getFile().equals(fileCurrentlyProcessed)) {
-                        if (type == IfType.IF || type == IfType.ELSIF) {
-                            String cond = "";
-                            for (Token tok : condition) {
-                                cond += tok.getText();
-                            }
-                            try {
-                                return pp.expr(cond) + "";
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            } catch (LexerException e) {
-                                e.printStackTrace();
-                            }
-                        } else if(type == IfType.IFDEF){
-                            if(condition.size() == 1) {
-                                String name = condition.get(0).getText();
-                                if (pp.isDefined(name)) {
-                                    return "1";
-                                } else {
-                                    return "0";
-                                }
-                            }
-                        } else if(type == IfType.IFNDEF){
-                            if(condition.size() == 1) {
-                                String name = condition.get(0).getText();
-                                if (pp.isDefined(name)) {
-                                    return "0";
-                                } else {
-                                    return "1";
-                                }
-                            }
-                        }
-                    }
-                }
-                return null;
-            }
-        });
+//        pp.setControlListener(new IPreprocessorControlListener() {
+//            public boolean addMacro(Macro m, Source source) {
+//                return true;
+//            }
+//
+//            public boolean removeMacro(Macro m, Source source) {
+//                return true;
+//            }
+//
+//            public boolean expandMacro(Macro m, Source source, int line, int column, boolean isInIf) {
+//                return isInIf;
+//            }
+//
+//            public boolean include(@Nonnull Source source, int line, @Nonnull String name, boolean quoted, boolean next) {
+//                return true;
+//            }
+//
+//            public boolean processIf(List<Token> condition, Source source, IfType type) {
+//                if (source instanceof FileLexerSource) {
+//                    if (((FileLexerSource) source).getFile().equals(fileCurrentlyProcessed)) {
+//                        return false;
+//                    }
+//                }
+//                return true;
+//            }
+//
+//            public String getPartiallyProcessedCondition(List<Token> condition, Source source, IfType type, final Preprocessor pp) {
+//                if (source instanceof FileLexerSource) {
+//                    if (((FileLexerSource) source).getFile().equals(fileCurrentlyProcessed)) {
+//                        if (type == IfType.IF || type == IfType.ELSIF) {
+//
+//                            FeatureExpressionParser parser = new FeatureExpressionParser(condition);
+//
+//                            final FeatureExpression expr = parser.parse();
+//
+//                            System.out.println("Parsed FeatureExpression: " + expr);
+//
+//                            expr.traverse(new PostOrderTraversal() {
+//                                public void postVisit(FeatureExpression visitedExpr) {
+//                                    if(visitedExpr instanceof MacroCall){
+//                                        try {
+//                                            List<Token> expanded = pp.expand(visitedExpr.toString());
+//                                            FeatureExpressionParser parser = new FeatureExpressionParser(expanded);
+//                                            FeatureExpression expandedExpr = parser.parse();
+//                                            System.out.println("Expanded FeatureExpression: " + expandedExpr);
+//                                            //replace visitedExpr with expandedExpr in expr
+//                                            expr.replace(visitedExpr, expandedExpr);
+//                                        } catch (IOException e) {
+//                                            e.printStackTrace();
+//                                        } catch (LexerException e) {
+//                                            e.printStackTrace();
+//                                        }
+//                                    }
+//                                }
+//                            });
+//                            return expr.toString();
+//                        }
+//                    }
+//                }
+//                return null;
+//            }
+//        });
     }
 
     public void debug() {
@@ -258,6 +268,9 @@ public class PreprocessorAPI {
         for (File f : files) {
 
             this.fileCurrentlyProcessed = f;
+            if(this.controlListener != null){
+                this.controlListener.setFileCurrentlyProcessed(f);
+            }
 
             try {
                 pp.addInput(f);

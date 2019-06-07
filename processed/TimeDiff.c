@@ -1,13 +1,14 @@
+#include <stdio.h>
 
+#define SECONDS 
 
-
-
+#define DEC(x) {--x;}
 
 struct TIME
 {
-  
+  #ifdef SECONDS    
   int seconds;
-  
+  #endif  
   int minutes;
   int hours;
 };
@@ -37,16 +38,16 @@ int main()
 
 void differenceBetweenTimePeriod(struct TIME start, struct TIME stop, struct TIME *diff)
 {
-	
+	#ifdef SECONDS    
 	if(stop.seconds > start.seconds){
-        {--start.minutes;};
+        DEC(start.minutes);
         start.seconds += 60;
     }
     diff->seconds = start.seconds - stop.seconds;
-	
+	#endif  
 	
     if(stop.minutes > start.minutes){
-        {--start.hours;};
+        DEC(start.hours);
         start.minutes += 60;
     }
 

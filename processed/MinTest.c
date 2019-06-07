@@ -10,13 +10,12 @@
 
 #define A 1
 
-//#if MIN(2, 3) > 1
-#if 1
-//#if ((2) < (3) ? (3) : (2)) < 10
-//#if 2 < 10
+
+#if ((2) < (3) ? (3) : (2)) < 10
+
 int a;
 
-#elif 0
+#elif ((2) < (((4) < (3) ? (3) : (4))) ? (((4) < (3) ? (3) : (4))) : (2)) < 3
 int b;
 #else
 int c;
@@ -31,7 +30,7 @@ int main(){
 	
 	printf("MAX: %d - ", MAX(a1, a2));
 	
-	#ifdef 1
+	#ifdef DO_SWAP
  
 	int x = 10;
 	int y = 5;
@@ -39,7 +38,7 @@ int main(){
  
 	// What happens now?
 	if(x < 0)
-		#if 1
+		#if defined(SWAP)
 	    SWAP(x, y);
 		#endif
 	else
@@ -47,7 +46,7 @@ int main(){
 	
 	#endif
 	
-	#ifndef 0
+	#ifndef DO_SWAP
 	//no swaping
 	#endif
 }
