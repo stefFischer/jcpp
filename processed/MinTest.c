@@ -11,7 +11,8 @@
 #define A 1
 
 
-#if ((2) < (3) ? (3) : (2)) < 10
+#if ((2) < (3) ? (3) : (2)) < 10 && (3 + 4) < 10
+
 
 int a;
 
@@ -35,7 +36,7 @@ int main(){
 	int x = 10;
 	int y = 5;
 	int z = 4;
- 
+  
 	// What happens now?
 	if(x < 0)
 		#if defined(SWAP)
