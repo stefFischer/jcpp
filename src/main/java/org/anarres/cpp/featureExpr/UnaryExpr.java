@@ -30,6 +30,17 @@ public abstract class UnaryExpr extends FeatureExpression {
         this.operator.setParent(this);
     }
 
+    public boolean equals(FeatureExpression other) {
+        if(other == this){
+            return true;
+        }
+        if(!(other instanceof UnaryExpr)){
+            return false;
+        }
+        return this.expr.equals(((UnaryExpr)other).expr)
+                && this.operator.equals(((UnaryExpr)other).operator);
+    }
+
     public boolean replace(FeatureExpression child, FeatureExpression newChild) {
         if(child == this.expr){
             setExpr(newChild);

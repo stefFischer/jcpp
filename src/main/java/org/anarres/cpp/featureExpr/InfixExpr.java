@@ -58,6 +58,18 @@ public class InfixExpr extends FeatureExpression {
         return leftHandSide + " " + operator + " " + rightHandSide;
     }
 
+    public boolean equals(FeatureExpression other) {
+        if(other == this){
+            return true;
+        }
+        if(!(other instanceof InfixExpr)){
+            return false;
+        }
+        return this.leftHandSide.equals(((InfixExpr)other).leftHandSide)
+                && this.operator.equals(((InfixExpr)other).operator)
+                && this.rightHandSide.equals(((InfixExpr)other).rightHandSide);
+    }
+
     public boolean replace(FeatureExpression child, FeatureExpression newChild) {
         if(child == this.leftHandSide){
             setLeftHandSide(newChild);

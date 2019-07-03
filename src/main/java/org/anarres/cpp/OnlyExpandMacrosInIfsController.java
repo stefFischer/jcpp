@@ -51,7 +51,7 @@ public class OnlyExpandMacrosInIfsController extends PreprocessorControlListener
         return null;
     }
 
-    private class ExpandTraversal extends  PostOrderTraversal{
+    private class ExpandTraversal extends PostOrderTraversal{
 
         private FeatureExpression root;
 

@@ -59,4 +59,6 @@ public interface PreprocessorListener {
     void handleInclude(@Nonnull String text, Source source, Source toInclude);
 
     void handleDefine(Macro m, Source source);
+
+    void handleUndefine(Macro m, Source source);
 }

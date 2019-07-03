@@ -54,6 +54,17 @@ public class MacroCall extends FeatureExpression{
         return name + "(" + args + ")";
     }
 
+    public boolean equals(FeatureExpression other) {
+        if(other == this){
+            return true;
+        }
+        if(!(other instanceof MacroCall)){
+            return false;
+        }
+        return this.name.equals(((MacroCall)other).name)
+                && this.arguments.equals(((MacroCall)other).arguments);
+    }
+
     public boolean replace(FeatureExpression child, FeatureExpression newChild) {
         if(child == this.name){
             if(newChild instanceof Name){

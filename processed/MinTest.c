@@ -1,26 +1,52 @@
 #include <stdio.h>
 
-#define MIN(a, b) ({__typeof__(a) _a = (a); __typeof__(b) _b = (b); _a < _b ? _a : _b;})
+#define C 1
+
+#ifdef DO_SWAP
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define B 2
+#else  
+#define MIN(a, b) ((a) == (b) ? (a) : (b))
+#define B 5
+#define C 0
+#endif
 
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 
+#ifdef DO_SWAP
 #define SWAP(a, b) { a ^= b; b ^= a; a ^= b; }
+#endif
 
 #define ADD(a, b) (a + b)
 
-#define A 1
+#if 1
 
 
-#if ((2) < (3) ? (3) : (2)) < 10 && (3 + 4) < 10
+#define A 2
 
+#endif
+
+#if ((!DO_SWAP && 1) || ((DO_SWAP && !(!DO_SWAP)) && 1))
 
 int a;
 
-#elif ((2) < (((4) < (3) ? (3) : (4))) ? (((4) < (3) ? (3) : (4))) : (2)) < 3
+#elif 0
 int b;
 #else
+#if !(!DO_SWAP)
 int c;
 #endif
+#endif
+
+#if ((((!DO_SWAP && 0) || ((DO_SWAP && !(!DO_SWAP)) && 1)) || (((DO_SWAP && !(!DO_SWAP)) && !DO_SWAP) && 1)) || ((!DO_SWAP && (DO_SWAP && !(!DO_SWAP))) && 1))
+int min;
+#endif
+
+#if NUMBER > 5 && ((NUMBER) < 5 ? 5 : (NUMBER)) > 5
+
+#endif
+
+#undef SWAP
 
 int main(){
 	
@@ -39,7 +65,7 @@ int main(){
   
 	// What happens now?
 	if(x < 0)
-		#if defined(SWAP)
+		#if ((DO_SWAP && 0) && 0 && defined(DO_SWAP))
 	    SWAP(x, y);
 		#endif
 	else
@@ -49,6 +75,10 @@ int main(){
 	
 	#ifndef DO_SWAP
 	//no swaping
+	#endif
+	
+	#if 97
+	
 	#endif
 }
 

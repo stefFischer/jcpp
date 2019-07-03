@@ -96,4 +96,7 @@ public class DefaultPreprocessorListener implements PreprocessorListener {
 
     public void handleDefine(Macro m, Source source) {
     }
+
+    public void handleUndefine(Macro m, Source source) {
+    }
 }

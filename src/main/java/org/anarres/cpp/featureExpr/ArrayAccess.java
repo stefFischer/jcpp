@@ -43,6 +43,17 @@ public class ArrayAccess extends FeatureExpression {
         return array + "[" + index + "]";
     }
 
+    public boolean equals(FeatureExpression other) {
+        if(other == this){
+            return true;
+        }
+        if(!(other instanceof ArrayAccess)){
+            return false;
+        }
+        return this.array.equals(((ArrayAccess)other).array)
+                && this.index.equals(((ArrayAccess)other).index);
+    }
+
     public boolean replace(FeatureExpression child, FeatureExpression newChild) {
         if(child == this.array){
             setArray(newChild);

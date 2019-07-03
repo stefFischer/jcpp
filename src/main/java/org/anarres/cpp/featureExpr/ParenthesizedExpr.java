@@ -28,6 +28,16 @@ public class ParenthesizedExpr extends FeatureExpression {
         return "(" + expr + ")";
     }
 
+    public boolean equals(FeatureExpression other) {
+        if(other == this){
+            return true;
+        }
+        if(!(other instanceof ParenthesizedExpr)){
+            return false;
+        }
+        return this.expr.equals(((ParenthesizedExpr)other).expr);
+    }
+
     public boolean replace(FeatureExpression child, FeatureExpression newChild) {
         if(child == this.expr){
             setExpr(newChild);

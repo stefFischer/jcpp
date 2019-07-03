@@ -1,7 +1,5 @@
 package org.anarres.cpp.featureExpr;
 
-import org.anarres.cpp.Token;
-
 import java.util.List;
 
 public abstract class FeatureExpression {
@@ -22,10 +20,14 @@ public abstract class FeatureExpression {
 
     public abstract boolean replace(FeatureExpression child, FeatureExpression newChild);
 
+    public abstract boolean equals(FeatureExpression other);
+
     public void traverse(FeatureExpressionTraversal traversal){
         traversal.preVisit(this);
-        for(FeatureExpression child : getChildren()){
-            child.traverse(traversal);
+        if(!traversal.doSkipChildren(this)) {
+            for (FeatureExpression child : getChildren()) {
+                child.traverse(traversal);
+            }
         }
         traversal.postVisit(this);
     }

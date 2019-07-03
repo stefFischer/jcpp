@@ -58,6 +58,18 @@ public class CondExpr extends FeatureExpression{
         return expr.toString() + " ? " + thenExpr.toString() + " : " + elseExpr.toString();
     }
 
+    public boolean equals(FeatureExpression other) {
+        if(other == this){
+            return true;
+        }
+        if(!(other instanceof CondExpr)){
+            return false;
+        }
+        return this.expr.equals(((CondExpr)other).expr)
+                && this.thenExpr.equals(((CondExpr)other).thenExpr)
+                && this.elseExpr.equals(((CondExpr)other).elseExpr);
+    }
+
     public boolean replace(FeatureExpression child, FeatureExpression newChild) {
         if(child == this.expr){
             setExpr(newChild);

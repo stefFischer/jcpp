@@ -105,6 +105,16 @@ public class PreprocessorAPI {
                     }
                 }
             }
+
+            public void handleUndefine(Macro m, Source source) {
+                if (keepDefines) {
+                    if (source instanceof FileLexerSource) {
+                        if (((FileLexerSource) source).getFile().equals(fileCurrentlyProcessed)) {
+                            out.print("#undef " + m.getName());
+                        }
+                    }
+                }
+            }
         });
 
         if(controlListener != null){
