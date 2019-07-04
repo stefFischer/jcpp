@@ -57,7 +57,9 @@ public class MyTests {
         features.add("DO_SWAP");
         features.add("NUMBER");
 
-        PreprocessorAPI pp = new PreprocessorAPI(new ReduceToExternalFeatures(features));
+        ReduceToExternalFeatures controller = new ReduceToExternalFeatures(features);
+
+        PreprocessorAPI pp = new PreprocessorAPI(controller);
 
         //add locations for includes
         pp.addSystemIncludePath("C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include");
@@ -85,5 +87,7 @@ public class MyTests {
         //src file or directory
         //target directory
         pp.preprocess(src, target);
+
+        controller.printMacros();
     }
 }

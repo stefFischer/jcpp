@@ -70,6 +70,10 @@ public class AssignExpr extends FeatureExpression {
                 && this.rightHandSide.equals(((AssignExpr)other).rightHandSide);
     }
 
+    public AssignExpr clone() {
+        return new AssignExpr(leftHandSide.clone(), operator.clone(), rightHandSide.clone());
+    }
+
     public boolean replace(FeatureExpression child, FeatureExpression newChild) {
         if(child == this.leftHandSide){
             setLeftHandSide(newChild);

@@ -37,6 +37,9 @@ public abstract class UnaryExpr extends FeatureExpression {
         if(!(other instanceof UnaryExpr)){
             return false;
         }
+        if(this.getClass() != other.getClass()){
+            return false;
+        }
         return this.expr.equals(((UnaryExpr)other).expr)
                 && this.operator.equals(((UnaryExpr)other).operator);
     }

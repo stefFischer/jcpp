@@ -70,6 +70,10 @@ public class CondExpr extends FeatureExpression{
                 && this.elseExpr.equals(((CondExpr)other).elseExpr);
     }
 
+    public CondExpr clone() {
+        return new CondExpr(expr.clone(), thenExpr.clone(), elseExpr.clone());
+    }
+
     public boolean replace(FeatureExpression child, FeatureExpression newChild) {
         if(child == this.expr){
             setExpr(newChild);

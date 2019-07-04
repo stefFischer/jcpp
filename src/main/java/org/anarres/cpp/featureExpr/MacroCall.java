@@ -61,8 +61,23 @@ public class MacroCall extends FeatureExpression{
         if(!(other instanceof MacroCall)){
             return false;
         }
-        return this.name.equals(((MacroCall)other).name)
-                && this.arguments.equals(((MacroCall)other).arguments);
+        if(this.arguments.size() != ((MacroCall) other).arguments.size()){
+            return false;
+        }
+        for(int i=0; i < this.arguments.size() ;i++){
+            if(!this.arguments.get(i).equals(((MacroCall) other).arguments.get(i))){
+                return false;
+            }
+        }
+        return this.name.equals(((MacroCall)other).name);
+    }
+
+    public MacroCall clone() {
+        List<FeatureExpression> clonedArguments = new LinkedList<FeatureExpression>();
+        for(FeatureExpression arg : this.arguments){
+            clonedArguments.add(arg.clone());
+        }
+        return new MacroCall(name.clone(), clonedArguments);
     }
 
     public boolean replace(FeatureExpression child, FeatureExpression newChild) {

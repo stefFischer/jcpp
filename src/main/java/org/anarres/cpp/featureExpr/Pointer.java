@@ -69,6 +69,10 @@ public class Pointer extends FeatureExpression {
                 && this.pointee.equals(((Pointer)other).pointee);
     }
 
+    public Pointer clone() {
+        return new Pointer(pointer.clone(), operator.clone(), pointee.clone());
+    }
+
     public boolean replace(FeatureExpression child, FeatureExpression newChild) {
         if(child == this.pointer){
             setPointer(newChild);

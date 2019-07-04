@@ -70,6 +70,10 @@ public class InfixExpr extends FeatureExpression {
                 && this.rightHandSide.equals(((InfixExpr)other).rightHandSide);
     }
 
+    public InfixExpr clone() {
+        return new InfixExpr(leftHandSide.clone(), operator.clone(), rightHandSide.clone());
+    }
+
     public boolean replace(FeatureExpression child, FeatureExpression newChild) {
         if(child == this.leftHandSide){
             setLeftHandSide(newChild);

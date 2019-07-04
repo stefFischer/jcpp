@@ -13,7 +13,7 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
     private Preprocessor pp;
 
     //mapping feature expression to macro
-    Map<String, Map<String, Macro>> macros;
+    private Map<String, Map<String, Macro>> macros;
 
     public ReduceToExternalFeatures(Set<String> externalFeatures) {
         this.externalFeatures = externalFeatures;
@@ -27,9 +27,11 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
     }
 
     private void addMacro(Macro m, FeatureExpression expr){
+        System.out.println("addMacro: " + m.getName() + " : " + expr);
         Map<String, Macro> byExpr = this.macros.get(m.getName());
         if(byExpr == null){
             byExpr = new HashMap<String, Macro>();
+            byExpr.put(negate(expr).toString(), null); //add negated expr so that we also cover the case where the macro is never defined
             this.macros.put(m.getName(), byExpr);
         } else {
             //update previous expressions with not expr
@@ -66,6 +68,8 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
             FeatureExpression stateExpr = null;
             int i = 1;
             for (List<Token> tokens : state.getTokens()) {
+                Token first = tokens.get(0);
+                boolean negate = first.getText().equals("ifndef");
                 FeatureExpressionParser parser = new FeatureExpressionParser(tokens.subList(1, tokens.size()));
                 FeatureExpression expr = parser.parse();
                 //negate if we are inside else or elif
@@ -76,10 +80,11 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
                         } else {
                             expr = new FeatureExpressionParser("0").parse();
                         }
-                    } else {
-                        parser = new FeatureExpressionParser("! " + expr);
-                        expr = parser.parse();
+                    } else if(!negate){
+                        expr = negate(expr);
                     }
+                } else if(negate){
+                    expr = negate(expr);
                 }
 
                 if(stateExpr == null){
@@ -158,6 +163,7 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
     }
 
     private void removeMacro(Macro m, FeatureExpression expr){
+        System.out.println("removeMacro: " + m.getName() + " : " + expr);
         Map<String, Macro> byExpr = this.macros.get(m.getName());
         if(byExpr != null){
             //update previous expressions with not expr
@@ -167,7 +173,9 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
                 updatedExpressions.put(updated.toString(), entry.getValue());
             }
             this.macros.put(m.getName(), updatedExpressions);
+            byExpr = updatedExpressions;
         }
+        byExpr.put(expr.toString(), null);
     }
 
     public boolean expandMacro(Macro m, Source source, int line, int column, boolean isInIf) {
@@ -193,9 +201,19 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
             if (((FileLexerSource) source).getFile().equals(getFileCurrentlyProcessed())) {
                 if (type == IfType.IF || type == IfType.ELSIF || type == IfType.IFDEF || type == IfType.IFNDEF) {
 
-                    FeatureExpressionParser parser = new FeatureExpressionParser(condition);
+                    FeatureExpression expr;
 
-                    final FeatureExpression expr = parser.parse();
+                    //convert IFDEF and IFNDEF to IF, IFNDEF has to consider negation
+                    if(type == IfType.IFDEF) {
+                        FeatureExpressionParser parser = new FeatureExpressionParser("defined(" + condition.get(0).getText() + ")");
+                        expr = parser.parse();
+                    } else if(type == IfType.IFNDEF){
+                        FeatureExpressionParser parser = new FeatureExpressionParser("!defined(" + condition.get(0).getText() + ")");
+                        expr = parser.parse();
+                    } else {
+                        FeatureExpressionParser parser = new FeatureExpressionParser(condition);
+                        expr = parser.parse();
+                    }
 
                     final Set<String> containedMacros = new HashSet<String>();
                     final Set<String> containedExternalFeatures = new HashSet<String>();
@@ -233,8 +251,11 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
                         FeatureExpression ret = null;
                         for (final Map<String, String> combination : combinations) {
                             //get expression for current configuration
+
+                            //FIXME there are problems when doing !defined -> move this part in ConditionTraversal and only do in necessary cases
+                            //TODO problem because configExpression and traversal.getRoot() keep negating each other
                             FeatureExpression configExpression = getConfigurationExpression(combination);
-                            FeatureExpression ex = new FeatureExpressionParser(condition).parse();
+                            FeatureExpression ex = expr.clone(); //new FeatureExpressionParser(condition).parse();
                             ConditionTraversal traversal = new ConditionTraversal(ex, pp, combination);
                             ex.traverse(traversal);
                             if (ret == null) {
@@ -242,21 +263,44 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
                             } else {
                                 ret = disjunct(ret, conjunct(configExpression, traversal.getRoot()));
                             }
+//                            if (ret == null) {
+//                                ret = traversal.getRoot();
+//                            } else {
+//                                ret = disjunct(ret, traversal.getRoot());
+//                            }
                         }
 
                         if (ret != null) {
                             EvalTraversal traversal = new EvalTraversal(ret, pp);
                             ret.traverse(traversal);
-                            return traversal.getRoot().toString();
-//                            return ret.toString();
+
+                            System.out.println("Simplify:");
+                            System.out.println(traversal.getRoot());
+                            System.out.println(FeatureExpressionSimplification.simplify(traversal.getRoot()));
+
+                            FeatureExpression simple = FeatureExpressionSimplification.simplify(traversal.getRoot());
+
+                            if (type == IfType.IFDEF || type == IfType.IFNDEF) {
+                                return "#if " + simple.toString();
+                            }
+                            return simple.toString();
                         }
                     } else {
                         ConditionTraversal traversal = new ConditionTraversal(expr, pp, null);
                         expr.traverse(traversal);
-//                        return traversal.getRoot().toString();
                         EvalTraversal eval = new EvalTraversal(traversal.getRoot(), pp);
                         traversal.getRoot().traverse(eval);
-                        return eval.getRoot().toString();
+
+                        System.out.println("Simplify:");
+                        System.out.println(eval.getRoot());
+                        System.out.println(FeatureExpressionSimplification.simplify(eval.getRoot()));
+
+                        FeatureExpression simple = FeatureExpressionSimplification.simplify(eval.getRoot());
+
+                        if (type == IfType.IFDEF || type == IfType.IFNDEF) {
+                            return "#if " + simple.toString();
+                        }
+                        return simple.toString();
                     }
                 }
             }
@@ -325,6 +369,14 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
         return false;
     }
 
+    public void printMacros() {
+        for(Map.Entry<String, Map<String, Macro>> macro : macros.entrySet()){
+            for(Map.Entry<String, Macro> condition : macro.getValue().entrySet()){
+                System.out.println(macro.getKey() + " : " + condition.getKey() + " : " + condition.getValue());
+            }
+        }
+    }
+
     private class ConditionTraversal extends PostOrderTraversal{
 
         private FeatureExpression root;
@@ -361,56 +413,84 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
                 if(this.combination != null){
                     condition = this.combination.get(macroName);
                 }
+                //check for macro defined here, for macros that may be undefined conditionally
                 if(condition == null){
-                    try {
-                        List<Token> expanded = pp.expand(visitedExpr.toString());
-                        FeatureExpressionParser parser = new FeatureExpressionParser(expanded);
-                        FeatureExpression expandedExpr = parser.parse();
-
-                        if (!containsFeature(expandedExpr)) {
-                            try {
-                                long val = pp.expr(expandedExpr.toString());
-                                parser = new FeatureExpressionParser(val + "");
-                                FeatureExpression evalExpr = parser.parse();
-                                expandedExpr = evalExpr;
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            } catch (LexerException e) {
-                                e.printStackTrace();
+                    if(macroName.equals("defined")){
+                        if (!containsFeature(visitedExpr)) {
+                            if (visitedExpr instanceof MacroCall) {
+                                FeatureExpression arg = ((MacroCall) visitedExpr).getArguments().get(0);
+                                if (arg instanceof Name) {
+                                    String cond = combination.get(arg.toString());
+                                    if(cond != null) {
+                                        Macro m = macros.get(arg.toString()).get(cond);
+                                        if(m != null) {
+//                                            FeatureExpressionParser parser = new FeatureExpressionParser(cond);
+//                                            FeatureExpression condExpr = parser.parse();
+//                                            replace(visitedExpr, condExpr);
+                                            replace(visitedExpr, new FeatureExpressionParser("1").parse());
+                                        } else {
+                                            replace(visitedExpr, new FeatureExpressionParser("0").parse());
+                                        }
+                                    }
+                                }
                             }
                         }
+                    } else {
+                        try {
+                            List<Token> expanded = pp.expand(visitedExpr.toString());
+                            FeatureExpressionParser parser = new FeatureExpressionParser(expanded);
+                            FeatureExpression expandedExpr = parser.parse();
 
-                        replace(visitedExpr, expandedExpr);
+                            if (!containsFeature(expandedExpr)) {
+                                try {
+                                    long val = pp.expr(expandedExpr.toString());
+                                    parser = new FeatureExpressionParser(val + "");
+                                    FeatureExpression evalExpr = parser.parse();
+                                    expandedExpr = evalExpr;
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                } catch (LexerException e) {
+                                    e.printStackTrace();
+                                }
+                            }
 
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (LexerException e) {
-                        e.printStackTrace();
+                            replace(visitedExpr, expandedExpr);
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } catch (LexerException e) {
+                            e.printStackTrace();
+                        }
                     }
                 } else {
 
                     //macros in our mapping (should be most, other than predefined ones)
                     try {
                         Macro m = macros.get(macroName).get(condition);
-                        List<Token> expanded = pp.expand(m, visitedExpr.toString());
-                        FeatureExpressionParser parser = new FeatureExpressionParser(expanded);
-                        FeatureExpression expandedExpr = parser.parse();
+                        if(m != null) {
+                            List<Token> expanded = pp.expand(m, visitedExpr.toString());
+                            FeatureExpressionParser parser = new FeatureExpressionParser(expanded);
+                            FeatureExpression expandedExpr = parser.parse();
 
-                        if (!containsFeature(expandedExpr)) {
-                            try {
-                                long val = pp.expr(expandedExpr.toString());
-                                parser = new FeatureExpressionParser(val + "");
-                                FeatureExpression evalExpr = parser.parse();
-                                expandedExpr = evalExpr;
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            } catch (LexerException e) {
-                                e.printStackTrace();
+                            if (!containsFeature(expandedExpr)) {
+                                try {
+                                    long val = pp.expr(expandedExpr.toString());
+                                    parser = new FeatureExpressionParser(val + "");
+                                    FeatureExpression evalExpr = parser.parse();
+                                    expandedExpr = evalExpr;
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                } catch (LexerException e) {
+                                    e.printStackTrace();
+                                }
                             }
+//                        expandedExpr = conjunct(expandedExpr, new FeatureExpressionParser(condition).parse());
+
+                            replace(visitedExpr, expandedExpr);
+                        } else {
+                            replace(visitedExpr, new FeatureExpressionParser("0").parse());
+//                            System.err.println("Tried to expand undefined macro");
                         }
-
-                        replace(visitedExpr, expandedExpr);
-
                     } catch (IOException e) {
                         e.printStackTrace();
                     } catch (LexerException e) {
@@ -447,7 +527,6 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
                 if(visitedExpr != root && visitedExpr instanceof SingleTokenExpr){
                     return;
                 }
-
                 try {
                     long val = pp.expr(visitedExpr.toString());
                     FeatureExpressionParser parser = new FeatureExpressionParser(val + "");

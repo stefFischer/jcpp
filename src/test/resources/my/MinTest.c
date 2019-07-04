@@ -7,7 +7,7 @@
 #define B 2
 #else 
 #define MIN(a, b) ((a) == (b) ? (a) : (b))
-#define B 5
+#define B 11
 #define C 0
 #endif
 
@@ -46,7 +46,24 @@ int min;
 
 #endif
 
+#ifndef DO_SWAP
 #undef SWAP
+#define X
+#else
+#define Y	
+#endif
+
+#ifdef SWAP
+#endif
+
+#ifndef SWAP
+#endif
+
+#if defined(SWAP)
+#endif
+
+#if !defined(SWAP)
+#endif
 
 int main(){
 	
@@ -67,6 +84,9 @@ int main(){
 	if(x < 0)
 		#if defined(SWAP) && defined(DO_SWAP)
 	    SWAP(x, y);
+		#endif
+		
+		#if !defined(SWAP) && defined(DO_SWAP)
 		#endif
 	else
 	    SWAP(x, z); 

@@ -22,6 +22,8 @@ public abstract class FeatureExpression {
 
     public abstract boolean equals(FeatureExpression other);
 
+    public abstract FeatureExpression clone();
+
     public void traverse(FeatureExpressionTraversal traversal){
         traversal.preVisit(this);
         if(!traversal.doSkipChildren(this)) {

@@ -54,6 +54,10 @@ public class ArrayAccess extends FeatureExpression {
                 && this.index.equals(((ArrayAccess)other).index);
     }
 
+    public ArrayAccess clone() {
+        return new ArrayAccess(array.clone(), index.clone());
+    }
+
     public boolean replace(FeatureExpression child, FeatureExpression newChild) {
         if(child == this.array){
             setArray(newChild);

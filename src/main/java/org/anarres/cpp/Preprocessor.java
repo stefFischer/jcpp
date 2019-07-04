@@ -924,7 +924,11 @@ public class Preprocessor implements Closeable {
             tok = source.token();
         }
         List<Token> expanded = expand(toks);
-        addMacro(before);
+        if(before != null){
+            addMacro(before);
+        } else {
+            macros.remove(m.getName());
+        }
         return expanded;
     }
 
@@ -2232,13 +2236,17 @@ public class Preprocessor implements Closeable {
                                             push_source(new UnprocessedFixedTokenSource(ppTokens), true);
                                         } else {
                                             List<Token> partiallyProcessedTokens = new LinkedList<Token>();
-                                            partiallyProcessedTokens.add(ppTokens.get(0));
-                                            partiallyProcessedTokens.add(ppTokens.get(1));
                                             StringLexerSource lex = new StringLexerSource(partiallyProcessed);
                                             Token t = lex.token();
                                             while (t.getType() != EOF) {
                                                 partiallyProcessedTokens.add(t);
                                                 t = lex.token();
+                                            }
+                                            if(partiallyProcessedTokens.get(0).getType() == HASH){
+                                                partiallyProcessedTokens.remove(0);
+                                            } else {
+                                                partiallyProcessedTokens.add(0, ppTokens.get(0));
+                                                partiallyProcessedTokens.add(1, ppTokens.get(1));
                                             }
                                             states.peek().removeLastTokens();
                                             states.peek().setTokens(partiallyProcessedTokens);
@@ -2278,14 +2286,31 @@ public class Preprocessor implements Closeable {
                                         if(partiallyProcessed == null) {
                                             push_source(new UnprocessedFixedTokenSource(ppTokens), true);
                                         } else {
+//                                            List<Token> partiallyProcessedTokens = new LinkedList<Token>();
+//                                            partiallyProcessedTokens.add(ppTokens.get(0));
+//                                            partiallyProcessedTokens.add(ppTokens.get(1));
+//                                            StringLexerSource lex = new StringLexerSource(partiallyProcessed);
+//                                            Token t = lex.token();
+//                                            while (t.getType() != EOF) {
+//                                                partiallyProcessedTokens.add(t);
+//                                                t = lex.token();
+//                                            }
+//                                            states.peek().removeLastTokens();
+//                                            states.peek().setTokens(partiallyProcessedTokens);
+//                                            push_source(new UnprocessedFixedTokenSource(partiallyProcessedTokens), true);
+
                                             List<Token> partiallyProcessedTokens = new LinkedList<Token>();
-                                            partiallyProcessedTokens.add(ppTokens.get(0));
-                                            partiallyProcessedTokens.add(ppTokens.get(1));
                                             StringLexerSource lex = new StringLexerSource(partiallyProcessed);
                                             Token t = lex.token();
                                             while (t.getType() != EOF) {
                                                 partiallyProcessedTokens.add(t);
                                                 t = lex.token();
+                                            }
+                                            if(partiallyProcessedTokens.get(0).getType() == HASH){
+                                                partiallyProcessedTokens.remove(0);
+                                            } else {
+                                                partiallyProcessedTokens.add(0, ppTokens.get(0));
+                                                partiallyProcessedTokens.add(1, ppTokens.get(1));
                                             }
                                             states.peek().removeLastTokens();
                                             states.peek().setTokens(partiallyProcessedTokens);
