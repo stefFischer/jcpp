@@ -46,6 +46,10 @@ int min;
 
 #endif
 
+#if MAX(NUMBER, 5) > 5 && !(MAX(NUMBER, 5) > 5)
+
+#endif
+
 #ifndef DO_SWAP
 #undef SWAP
 #define X

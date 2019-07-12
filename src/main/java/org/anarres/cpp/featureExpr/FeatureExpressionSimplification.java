@@ -34,7 +34,7 @@ public class FeatureExpressionSimplification {
                 simplifyNot(expr);
             }
             if(expr instanceof ParenthesizedExpr){
-                simplifyParenthesie(expr);
+                simplifyParentheses(expr);
             }
             if(isAnd(expr)){
                 simplifyAnd(expr);
@@ -60,7 +60,7 @@ public class FeatureExpressionSimplification {
             FeatureExpression notChild = ((PrefixExpr) expr).getExpr();
 
             if(notChild instanceof NumberLiteral){
-                if(((NumericValue)((NumberLiteral) expr).getToken().getValue()).doubleValue() == 0){
+                if(((NumericValue)((NumberLiteral) notChild).getToken().getValue()).doubleValue() == 0){
                     replace(expr, (new FeatureExpressionParser("1")).parse());
                 } else {
                     replace(expr, (new FeatureExpressionParser("0")).parse());
@@ -72,11 +72,11 @@ public class FeatureExpressionSimplification {
             }
         }
 
-        private void simplifyParenthesie(FeatureExpression expr){
+        private void simplifyParentheses(FeatureExpression expr){
             if(expr instanceof ParenthesizedExpr){
                 FeatureExpression internal = ((ParenthesizedExpr) expr).getExpr();
                 if(internal instanceof ParenthesizedExpr){
-                    replace(expr, ((ParenthesizedExpr) internal).getExpr());
+                    replace(expr, internal);
                 }
                 if(isNot(internal)){
                     replace(expr, internal);
@@ -113,15 +113,31 @@ public class FeatureExpressionSimplification {
                     return;
                 }
                 if(isNot(ex1)){
-                    if(((PrefixExpr) ex1).getExpr().equals(ex2)){
+                    FeatureExpression internal = ((PrefixExpr) ex1).getExpr();
+                    if(internal.equals(ex2)){
                         replace(expr, new FeatureExpressionParser("0").parse());
                         return;
                     }
+                    //also check if expr in not is in Parentheses, and then compare inside them
+                    if(internal instanceof  ParenthesizedExpr){
+                        if(((ParenthesizedExpr) internal).getExpr().equals(ex2)){
+                            replace(expr, new FeatureExpressionParser("0").parse());
+                            return;
+                        }
+                    }
                 }
                 if(isNot(ex2)){
-                    if(((PrefixExpr) ex2).getExpr().equals(ex1)){
+                    FeatureExpression internal = ((PrefixExpr) ex2).getExpr();
+                    if(internal.equals(ex1)){
                         replace(expr, new FeatureExpressionParser("0").parse());
                         return;
+                    }
+                    //also check if expr in not is in Parentheses, and then compare inside them
+                    if(internal instanceof  ParenthesizedExpr){
+                        if(((ParenthesizedExpr) internal).getExpr().equals(ex1)){
+                            replace(expr, new FeatureExpressionParser("0").parse());
+                            return;
+                        }
                     }
                 }
             }
@@ -153,15 +169,31 @@ public class FeatureExpressionSimplification {
                     return;
                 }
                 if(isNot(ex1)){
-                    if(((PrefixExpr) ex1).getExpr().equals(ex2)){
+                    FeatureExpression internal = ((PrefixExpr) ex1).getExpr();
+                    if(internal.equals(ex2)){
                         replace(expr, new FeatureExpressionParser("1").parse());
                         return;
                     }
+                    //also check if expr in not is in Parentheses, and then compare inside them
+                    if(internal instanceof  ParenthesizedExpr){
+                        if(((ParenthesizedExpr) internal).getExpr().equals(ex2)){
+                            replace(expr, new FeatureExpressionParser("1").parse());
+                            return;
+                        }
+                    }
                 }
                 if(isNot(ex2)){
-                    if(((PrefixExpr) ex2).getExpr().equals(ex1)){
+                    FeatureExpression internal = ((PrefixExpr) ex2).getExpr();
+                    if(internal.equals(ex1)){
                         replace(expr, new FeatureExpressionParser("1").parse());
                         return;
+                    }
+                    //also check if expr in not is in Parentheses, and then compare inside them
+                    if(internal instanceof  ParenthesizedExpr){
+                        if(((ParenthesizedExpr) internal).getExpr().equals(ex1)){
+                            replace(expr, new FeatureExpressionParser("1").parse());
+                            return;
+                        }
                     }
                 }
             }

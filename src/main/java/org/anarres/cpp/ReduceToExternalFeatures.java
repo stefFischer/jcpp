@@ -31,18 +31,21 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
         Map<String, Macro> byExpr = this.macros.get(m.getName());
         if(byExpr == null){
             byExpr = new HashMap<String, Macro>();
-            byExpr.put(negate(expr).toString(), null); //add negated expr so that we also cover the case where the macro is never defined
+            byExpr.put(FeatureExpressionSimplification.simplify(negate(expr)).toString(), null); //add negated expr so that we also cover the case where the macro is never defined
             this.macros.put(m.getName(), byExpr);
         } else {
             //update previous expressions with not expr
             Map<String, Macro> updatedExpressions = new HashMap<String, Macro>();
             for(Map.Entry<String, Macro> entry : byExpr.entrySet()){
                 FeatureExpression updated = conjunct(new FeatureExpressionParser(entry.getKey()).parse(), negate(expr));
+                //simplify
+                updated= FeatureExpressionSimplification.simplify(updated);
                 updatedExpressions.put(updated.toString(), entry.getValue());
             }
             this.macros.put(m.getName(), updatedExpressions);
             byExpr = updatedExpressions;
         }
+        //insert m with current expr
         byExpr.put(expr.toString(), m);
     }
 
@@ -101,12 +104,25 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
     }
 
     private FeatureExpression simplify(FeatureExpression ex){
+        //simplify
+        ex = FeatureExpressionSimplification.simplify(ex);
         if(ex instanceof  NumberLiteral){
             if(((NumericValue)((NumberLiteral) ex).getToken().getValue()).doubleValue() != 0){
                 return new FeatureExpressionParser("1").parse();
             }
         }
         return ex;
+    }
+
+    private boolean isFalse(FeatureExpression ex){
+        //simplify
+        ex = FeatureExpressionSimplification.simplify(ex);
+        if(ex instanceof  NumberLiteral){
+            if(((NumericValue)((NumberLiteral) ex).getToken().getValue()).doubleValue() == 0){
+                return true;
+            }
+        }
+        return false;
     }
 
     private FeatureExpression conjunct(FeatureExpression ex1 , FeatureExpression ex2){
@@ -170,10 +186,15 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
             Map<String, Macro> updatedExpressions = new HashMap<String, Macro>();
             for(Map.Entry<String, Macro> entry : byExpr.entrySet()){
                 FeatureExpression updated = conjunct(new FeatureExpressionParser(entry.getKey()).parse(), negate(expr));
+                //simplify
+                updated= FeatureExpressionSimplification.simplify(updated);
                 updatedExpressions.put(updated.toString(), entry.getValue());
             }
             this.macros.put(m.getName(), updatedExpressions);
             byExpr = updatedExpressions;
+        } else {
+            byExpr = new HashMap<String, Macro>();
+            this.macros.put(m.getName(), byExpr);
         }
         byExpr.put(expr.toString(), null);
     }
@@ -253,6 +274,11 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
                             //get expression for current configuration
 
                             FeatureExpression configExpression = getConfigurationExpression(combination);
+                            //filter combinations that can not evaluate to true ever (e.g. A && !A)
+                            if(isFalse(configExpression)){
+                                continue;
+                            }
+
                             FeatureExpression ex = expr.clone(); //new FeatureExpressionParser(condition).parse();
                             ConditionTraversal traversal = new ConditionTraversal(ex, pp, combination);
                             ex.traverse(traversal);
@@ -261,11 +287,6 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
                             } else {
                                 ret = disjunct(ret, conjunct(configExpression, traversal.getRoot()));
                             }
-//                            if (ret == null) {
-//                                ret = traversal.getRoot();
-//                            } else {
-//                                ret = disjunct(ret, traversal.getRoot());
-//                            }
                         }
 
                         if (ret != null) {

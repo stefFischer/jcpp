@@ -42,7 +42,11 @@ int c;
 int min;
 #endif
 
-#if (NUMBER > 5 && (NUMBER < 5 ? 5 : NUMBER) > 5)
+#if NUMBER > 5 && (NUMBER < 5 ? 5 : NUMBER) > 5
+
+#endif
+
+#if 0
 
 #endif
 
