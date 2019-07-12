@@ -252,8 +252,6 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
                         for (final Map<String, String> combination : combinations) {
                             //get expression for current configuration
 
-                            //FIXME there are problems when doing !defined -> move this part in ConditionTraversal and only do in necessary cases
-                            //TODO problem because configExpression and traversal.getRoot() keep negating each other
                             FeatureExpression configExpression = getConfigurationExpression(combination);
                             FeatureExpression ex = expr.clone(); //new FeatureExpressionParser(condition).parse();
                             ConditionTraversal traversal = new ConditionTraversal(ex, pp, combination);
