@@ -49,6 +49,35 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
         byExpr.put(expr.toString(), m);
     }
 
+    public boolean removeMacro(Macro m, Source source) {
+        //remove macro and update conditions
+        FeatureExpression stateExpr = currentStateCondition();
+        removeMacro(m, stateExpr);
+        return true;
+    }
+
+    private void removeMacro(Macro m, FeatureExpression expr){
+        System.out.println("removeMacro: " + m.getName() + " : " + expr);
+        Map<String, Macro> byExpr = this.macros.get(m.getName());
+        if(byExpr != null){
+            //update previous expressions with not expr
+            Map<String, Macro> updatedExpressions = new HashMap<String, Macro>();
+            for(Map.Entry<String, Macro> entry : byExpr.entrySet()){
+                FeatureExpression updated = conjunct(new FeatureExpressionParser(entry.getKey()).parse(), negate(expr));
+                //simplify
+                updated= FeatureExpressionSimplification.simplify(updated);
+                updatedExpressions.put(updated.toString(), entry.getValue());
+            }
+            this.macros.put(m.getName(), updatedExpressions);
+            byExpr = updatedExpressions;
+        } else {
+            byExpr = new HashMap<String, Macro>();
+            this.macros.put(m.getName(), byExpr);
+            byExpr.put(negate(expr).toString(), m);
+        }
+        byExpr.put(expr.toString(), null);
+    }
+
     private FeatureExpression currentStateCondition(){
         if(pp != null){
             FeatureExpression stateExpr = null;
@@ -171,34 +200,6 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
         return new FeatureExpressionParser("!(" + ex + ")").parse();
     }
 
-    public boolean removeMacro(Macro m, Source source) {
-        //remove macro and update conditions
-        FeatureExpression stateExpr = currentStateCondition();
-        removeMacro(m, stateExpr);
-        return true;
-    }
-
-    private void removeMacro(Macro m, FeatureExpression expr){
-        System.out.println("removeMacro: " + m.getName() + " : " + expr);
-        Map<String, Macro> byExpr = this.macros.get(m.getName());
-        if(byExpr != null){
-            //update previous expressions with not expr
-            Map<String, Macro> updatedExpressions = new HashMap<String, Macro>();
-            for(Map.Entry<String, Macro> entry : byExpr.entrySet()){
-                FeatureExpression updated = conjunct(new FeatureExpressionParser(entry.getKey()).parse(), negate(expr));
-                //simplify
-                updated= FeatureExpressionSimplification.simplify(updated);
-                updatedExpressions.put(updated.toString(), entry.getValue());
-            }
-            this.macros.put(m.getName(), updatedExpressions);
-            byExpr = updatedExpressions;
-        } else {
-            byExpr = new HashMap<String, Macro>();
-            this.macros.put(m.getName(), byExpr);
-        }
-        byExpr.put(expr.toString(), null);
-    }
-
     public boolean expandMacro(Macro m, Source source, int line, int column, boolean isInIf) {
         return isInIf;
     }
@@ -305,12 +306,15 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
                             return simple.toString();
                         }
                     } else {
-                        ConditionTraversal traversal = new ConditionTraversal(expr, pp, null);
-                        expr.traverse(traversal);
-                        EvalTraversal eval = new EvalTraversal(traversal.getRoot(), pp);
-                        traversal.getRoot().traverse(eval);
+//                        ConditionTraversal traversal = new ConditionTraversal(expr, pp, null);
+//                        expr.traverse(traversal);
+//                        EvalTraversal eval = new EvalTraversal(traversal.getRoot(), pp);
+//                        traversal.getRoot().traverse(eval);
 
-                        System.out.println("Simplify:");
+                        EvalTraversal eval = new EvalTraversal(expr, pp);
+                        expr.traverse(eval);
+
+                        System.out.println("Simplify2:");
                         System.out.println(eval.getRoot());
                         System.out.println(FeatureExpressionSimplification.simplify(eval.getRoot()));
 
@@ -429,13 +433,13 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
 
             if(macroName != null){
                 String condition = null;
-                if(this.combination != null){
+                 if(this.combination != null){
                     condition = this.combination.get(macroName);
                 }
                 //check for macro defined here, for macros that may be undefined conditionally
                 if(condition == null){
                     if(macroName.equals("defined")){
-                        if (!containsFeature(visitedExpr)) {
+//                        if (!containsFeature(visitedExpr)) {
                             if (visitedExpr instanceof MacroCall) {
                                 FeatureExpression arg = ((MacroCall) visitedExpr).getArguments().get(0);
                                 if (arg instanceof Name) {
@@ -452,7 +456,7 @@ public class ReduceToExternalFeatures extends PreprocessorControlListener {
                                         }
                                     }
                                 }
-                            }
+//                            }
                         }
                     } else {
                         try {

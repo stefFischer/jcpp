@@ -1173,6 +1173,13 @@ public class Preprocessor implements Closeable {
                     }
                     macros.remove(m.getName());
                 }
+            } else {
+                m = new Macro(tok.getText());
+                if (this.controlListener == null || this.controlListener.removeMacro(m, this.source)) {
+                    if (this.listener != null) {
+                        this.listener.handleUndefine(m, this.source);
+                    }
+                }
             }
         }
         return source_skipline(true);

@@ -57,6 +57,9 @@ int min;
 #define Y	
 #endif
 
+#if defined(UNDEFINED)
+#endif
+
 #ifdef SWAP
 #endif
 
@@ -67,6 +70,19 @@ int min;
 #endif
 
 #if !defined(SWAP)
+#endif
+
+#if defined(NUMBER)
+#endif
+
+#ifdef DO_SWAP
+#undef NUMBER
+#endif
+
+#if defined(NUMBER)
+#endif
+
+#if defined(DO_SWAP) && defined(NUMBER)
 #endif
 
 int main(){

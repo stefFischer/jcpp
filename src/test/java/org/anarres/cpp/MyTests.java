@@ -75,9 +75,6 @@ public class MyTests {
         //keep the define directives, in the output
         pp.setKeepDefines(true);
 
-        //you can set macros that are not defined in the source code
-//        pp.addMacro("DO_SWAP");
-
         File src = new File(cfile);
         File target = new File("processed");
 
