@@ -2,7 +2,7 @@
 
 #define C 1
 
-#ifdef DO_SWAP
+#if defined(DO_SWAP)
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define B 2
 #else  
@@ -13,76 +13,81 @@
 
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 
-#ifdef DO_SWAP
+#if defined(DO_SWAP)
 #define SWAP(a, b) { a ^= b; b ^= a; a ^= b; }
 #endif
 
 #define ADD(a, b) (a + b)
 
-#if ((2) < (3) ? (3) : (2)) < 10 && (3 + 4) < 10
+#define _CAT(a, ...) a ## __VA_ARGS__
+
+#if 10
+#endif
+
+#if 1
 
 
 #define A 2
 
 #endif
 
-#if ((2) < (11) ? (11) : (2)) < 10
+#if defined(DO_SWAP)
 
 int a;
 
-#elif ((2) < (((4) < (3) ? (3) : (4))) ? (((4) < (3) ? (3) : (4))) : (2)) < 3
+#elif 0
 int b;
 #else
-#if C
+#if defined(DO_SWAP)
 int c;
 #endif
 #endif
 
-#if ((2) == (11) ? (2) : (11)) < 3
+#if defined(DO_SWAP)
 int min;
 #endif
 
-#if NUMBER > 5 && ((NUMBER) < (5) ? (5) : (NUMBER)) > 5
+#if NUMBER > 5 && (NUMBER < 5 ? 5 : NUMBER) > 5
 
 #endif
 
-#if ((NUMBER) < (5) ? (5) : (NUMBER)) > 5 && !(((NUMBER) < (5) ? (5) : (NUMBER)) > 5)
+#if 0
 
 #endif
 
-#ifndef DO_SWAP
+#if !defined(DO_SWAP)
 #undef SWAP
 #define X 
 #else
 #define Y 
 #endif
 
-#if defined(UNDEFINED)
+#if 0
 #endif
 
-#ifdef SWAP
+#if defined(DO_SWAP)
 #endif
 
-#ifndef SWAP
+#if !defined(DO_SWAP)
 #endif
 
-#if defined(SWAP)
+#if defined(DO_SWAP)
 #endif
 
-#if !defined(SWAP)
+#if !defined(DO_SWAP)
 #endif
 
 #if defined(NUMBER)
 #endif
 
-#ifdef DO_SWAP
+#if defined(DO_SWAP)
 #undef NUMBER
 #endif
 
-#if defined(NUMBER)
+#if !defined(DO_SWAP)
 #endif
 
-#if defined(1) && defined(NUMBER)
+#if 0
 #endif
 
 int main(){
@@ -94,7 +99,7 @@ int main(){
 	
 	printf("MAX: %d - ", MAX(a1, a2));
 	
-	#ifdef DO_SWAP
+	#if defined(DO_SWAP)
  
 	int x = 10;
 	int y = 5;
@@ -102,22 +107,22 @@ int main(){
   
 	// What happens now?
 	if(x < 0)
-		#if defined(SWAP) && defined(1)
+		#if defined(DO_SWAP)
 	    SWAP(x, y);
 		#endif
 		
-		#if !defined(SWAP) && defined(1)
+		#if 0
 		#endif
 	else
 	    SWAP(x, z); 
 	
 	#endif
 	
-	#ifndef DO_SWAP
+	#if !defined(DO_SWAP)
 	//no swaping
 	#endif
 	
-	#if 'a'
+	#if 97
 	
 	#endif
 }

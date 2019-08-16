@@ -4,6 +4,7 @@ import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -93,14 +94,16 @@ public class PreprocessorAPI {
                                         out.print(", ");
                                     }
                                     first = false;
-                                    out.print(arg);
+                                    if(arg.equals("__VA_ARGS__")) {
+                                        out.print("...");
+                                    } else {
+                                        out.print(arg);
+                                    }
                                 }
                                 out.print(")");
                             }
                             out.print(" ");
-                            for (Token tok : m.getTokens()) {
-                                out.print(tok.getText());
-                            }
+                            out.print(m.getText());
                         }
                     }
                 }
@@ -204,7 +207,26 @@ public class PreprocessorAPI {
         }
 
         List<File> files = new LinkedList<File>();
-        getFilesToProcess(src, files);
+        List<File> filesNotProcessed = new LinkedList<File>();
+        getFilesToProcess(src, files, filesNotProcessed);
+
+        for (File f : filesNotProcessed) {
+            try {
+                String sourcePath = f.getCanonicalPath();
+                String relativePath = sourcePath.substring(src.getCanonicalPath().length());
+                File target;
+                if (relativePath.length() == 0) {
+                    target = new File(targetDir, f.getName());
+                } else {
+                    target = new File(targetDir, relativePath);
+                }
+                target.getParentFile().mkdirs();
+
+                Files.copy(f.toPath(), target.toPath());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         for (File f : files) {
 
@@ -263,16 +285,22 @@ public class PreprocessorAPI {
 
     }
 
-    private void getFilesToProcess(File f, List<File> files) {
+    private void getFilesToProcess(File f, List<File> filesToProcess, List<File> otherFiles) {
         if (f.isDirectory()) {
             for (File file : f.listFiles()) {
-                getFilesToProcess(file, files);
+                getFilesToProcess(file, filesToProcess, otherFiles);
             }
         } else if (f.isFile()) {
+            boolean process = false;
             for (String ext : this.fileTypes) {
                 if (f.getName().endsWith("." + ext)) {
-                    files.add(f);
+                    filesToProcess.add(f);
+                    process = true;
+                    break;
                 }
+            }
+            if(!process){
+                otherFiles.add(f);
             }
         }
     }

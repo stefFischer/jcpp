@@ -19,6 +19,11 @@
 
 #define ADD(a, b) (a + b)
 
+#define _CAT(a, ...) a ## __VA_ARGS__
+
+#if _CAT(1, 0)
+#endif
+
 #if MAX(2, 3) < 10 && \
 	ADD(3, 4) < 10
 
