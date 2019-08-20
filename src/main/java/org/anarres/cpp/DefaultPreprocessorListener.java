@@ -91,7 +91,7 @@ public class DefaultPreprocessorListener implements PreprocessorListener {
     public void handleSourceChange(Source source, SourceChangeEvent event) {
     }
 
-    public void handleInclude(@Nonnull String text, Source source, Source toInclude) {
+    public void handleInclude(@Nonnull String text, boolean next, Source source, Source toInclude) {
     }
 
     public void handleDefine(Macro m, Source source) {

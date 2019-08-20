@@ -56,7 +56,7 @@ public interface PreprocessorListener {
 
     void handleSourceChange(@Nonnull Source source, @Nonnull SourceChangeEvent event);
 
-    void handleInclude(@Nonnull String text, Source source, Source toInclude);
+    void handleInclude(@Nonnull String text, boolean next, Source source, Source toInclude);
 
     void handleDefine(Macro m, Source source);
 

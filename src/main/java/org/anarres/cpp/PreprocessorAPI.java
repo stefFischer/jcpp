@@ -68,14 +68,19 @@ public class PreprocessorAPI {
             public void handleSourceChange(@Nonnull Source source, @Nonnull SourceChangeEvent event) {
                 if (source instanceof FileLexerSource) {
                     currentFile = ((FileLexerSource) source).getFile();
+                    System.out.println("new File: " + currentFile);
                 }
             }
 
-            public void handleInclude(@Nonnull String text, Source source, Source toInclude) {
+            public void handleInclude(@Nonnull String text, boolean next, Source source, Source toInclude) {
                 if (keepIncludes) {
                     if (source instanceof FileLexerSource) {
                         if (!inlineIncludes && ((FileLexerSource) source).getFile().equals(fileCurrentlyProcessed)) {
-                            out.println("#include " + text);
+                            if(next){
+                                out.println("#include_next " + text);
+                            } else {
+                                out.println("#include " + text);
+                            }
                         }
                     }
                 }
@@ -104,6 +109,7 @@ public class PreprocessorAPI {
                             }
                             out.print(" ");
                             out.print(m.getText());
+                            System.out.println("def macro: " + m.getName() + ": " + m.getTokens());
                         }
                     }
                 }

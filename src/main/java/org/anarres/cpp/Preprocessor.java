@@ -993,6 +993,7 @@ public class Preprocessor implements Closeable {
         Macro m = new Macro(getSource(), name);
         List<String> args;
 
+        //parse macro arguments
         tok = source_token();
         if (tok.getType() == '(') {
             tok = source_token_nonwhite();
@@ -1066,6 +1067,10 @@ public class Preprocessor implements Closeable {
         boolean space = false;
         boolean paste = false;
         int idx;
+
+        if(name.equals("UART_ISR")){
+            System.out.println("UART_ISR");
+        }
 
         /* Ensure no space at start. */
         tok = source_token_nonwhite();
@@ -1200,6 +1205,18 @@ public class Preprocessor implements Closeable {
         // System.out.println("Try to include " + ((File)file).getAbsolutePath());
         if (!file.isFile())
             return false;
+
+        /** sFischer
+         * added code to catch files including themselves, leads to a OutOfMemoryException otherwise
+         */
+        Source fileSource = file.getSource();
+        if(fileSource instanceof  FileLexerSource && this.source instanceof FileLexerSource){
+            if(((FileLexerSource) fileSource).getFile().equals(((FileLexerSource) this.source).getFile())){
+                System.out.println("[Warning] #include in primary source file " + ((FileLexerSource) fileSource).getFile().getAbsolutePath());
+                return true;
+            }
+        }
+
         if (getFeature(Feature.DEBUG))
             LOG.debug("pp: including " + file);
         includes.add(file);
@@ -1347,7 +1364,7 @@ public class Preprocessor implements Closeable {
 
                 if (this.listener != null) {
                     //fire event
-                    this.listener.handleInclude(includeText, currSource, source);
+                    this.listener.handleInclude(includeText, next, currSource, source);
                 }
             }
 
