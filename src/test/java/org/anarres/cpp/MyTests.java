@@ -10,9 +10,9 @@ import java.util.Set;
 
 public class MyTests {
 
-//    private static final String cfile = "src\\test\\resources\\my\\MinTest.c";
+    private static final String cfile = "src\\test\\resources\\my\\MinTest.c";
 
-    private static final String cfile = "C:\\Users\\sfischer\\Desktop\\Arduino\\cores\\esp8266\\wiring_serial.c";
+//    private static final String cfile = "C:\\Users\\sfischer\\Desktop\\Arduino\\cores\\esp8266\\wiring_serial.c";
 
 //    private static final String cfile = "src\\test\\resources\\my";
 

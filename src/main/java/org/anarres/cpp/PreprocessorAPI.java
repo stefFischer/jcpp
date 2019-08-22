@@ -68,7 +68,7 @@ public class PreprocessorAPI {
             public void handleSourceChange(@Nonnull Source source, @Nonnull SourceChangeEvent event) {
                 if (source instanceof FileLexerSource) {
                     currentFile = ((FileLexerSource) source).getFile();
-                    System.out.println("new File: " + currentFile);
+//                    System.out.println("new File: " + currentFile);
                 }
             }
 
@@ -109,7 +109,7 @@ public class PreprocessorAPI {
                             }
                             out.print(" ");
                             out.print(m.getText());
-                            System.out.println("def macro: " + m.getName() + ": " + m.getTokens());
+//                            System.out.println("def macro: " + m.getName() + ": " + m.getTokens());
                         }
                     }
                 }

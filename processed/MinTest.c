@@ -24,6 +24,9 @@
 #if 10
 #endif
 
+#if defined(SDSUPPORT)
+#endif
+
 #define UART_ISR(uart_) ADD(uart_, uart_) { unsigned char c = 0 ## uart_; int i = uart_ + 1; if (i != uart_) { int c = i; } }
 
 

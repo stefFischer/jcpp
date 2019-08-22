@@ -24,6 +24,9 @@
 #if _CAT(1, 0)
 #endif
 
+#if defined SDSUPPORT
+#endif
+
 #define UART_ISR(uart_) \
 ADD(uart_, uart_) \
 { \

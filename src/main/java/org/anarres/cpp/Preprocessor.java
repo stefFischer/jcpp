@@ -1068,10 +1068,6 @@ public class Preprocessor implements Closeable {
         boolean paste = false;
         int idx;
 
-        if(name.equals("UART_ISR")){
-            System.out.println("UART_ISR");
-        }
-
         /* Ensure no space at start. */
         tok = source_token_nonwhite();
         EXPANSION:
