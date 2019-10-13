@@ -228,6 +228,10 @@ public class PreprocessorAPI {
                 }
                 target.getParentFile().mkdirs();
 
+                if(target.exists()){
+                    target.delete();
+                }
+
                 Files.copy(f.toPath(), target.toPath());
             } catch (IOException e) {
                 e.printStackTrace();

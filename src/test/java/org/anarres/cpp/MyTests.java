@@ -10,11 +10,17 @@ import java.util.Set;
 
 public class MyTests {
 
-    private static final String cfile = "src\\test\\resources\\my\\MinTest.c";
+    //private static final String cfile = "src\\test\\resources\\my\\MinTest.c";
 
 //    private static final String cfile = "C:\\Users\\sfischer\\Desktop\\Arduino\\cores\\esp8266\\wiring_serial.c";
 
 //    private static final String cfile = "src\\test\\resources\\my";
+
+    //private static final String TARGET = "processed";
+
+
+    private static final String cfile = "C:\\Users\\sfischer\\Desktop\\Marlin";
+    private static final String TARGET = "C:\\Users\\sfischer\\Desktop\\Marlin_processed";
 
     @Test
     public void testMain() throws Exception {
@@ -43,7 +49,7 @@ public class MyTests {
         pp.addMacro("DO_SWAP");
 
         File src = new File(cfile);
-        File target = new File("processed");
+        File target = new File(TARGET);
 
         //if you use this the preprocessor will be executed in debug mode
 //        pp.debug();
@@ -78,7 +84,7 @@ public class MyTests {
         pp.setKeepDefines(true);
 
         File src = new File(cfile);
-        File target = new File("processed");
+        File target = new File(TARGET);
 
         //if you use this the preprocessor will be executed in debug mode
 //        pp.debug();
